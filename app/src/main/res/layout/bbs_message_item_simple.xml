@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+
+        <variable
+                name="viewModel"
+                type="org.peercast.pecaviewer.chat.ListItemViewModel"/>
+
+        <import type="android.view.View"/>
+    </data>
+
+
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            >
+
+        <View
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:layout_marginRight="2dp"
+                android:layout_marginLeft="2dp"
+                android:visibility="@{viewModel.isLast ? View.VISIBLE: View.INVISIBLE}"
+                android:background="@color/orange_500"/>
+
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:minWidth="30sp"
+                android:gravity="top|left"
+                android:textStyle="bold"
+                android:text="@{viewModel.number}"
+                android:textAppearance="?attr/textAppearanceListItem"
+                android:paddingRight="3dp"
+                />
+
+        <TextView
+                android:id="@+id/vBody"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceListItem"
+                android:text="@{viewModel.body}"
+                android:textIsSelectable="true"
+                android:autoLink="web"
+                />
+<!---->
+        <Space
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"/>
+    </LinearLayout>
+
+
+</layout>

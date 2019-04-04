@@ -1,0 +1,5 @@
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="video_scale">画面スケール</string>
+    <string name="background">バックグラウンド</string>
+    <string name="screenshot" >スクリーンショット</string>
+</resources>

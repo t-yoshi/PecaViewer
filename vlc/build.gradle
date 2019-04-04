@@ -1,0 +1,46 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 28
+
+
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 30099
+        versionName "3.0.99"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+
+    }
+
+    sourceSets {
+        main {
+            jni.srcDirs = []
+            // Prevent gradle from building native code with ndk; we have our own Makefile for it.
+            jniLibs.srcDirs = ['nativelibs']
+            // Where generated .so files are placed.
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+
+    implementation 'androidx.appcompat:appcompat:1.1.0-alpha02'
+
+
+    testImplementation 'junit:junit:4.12'
+
+    androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
+}
