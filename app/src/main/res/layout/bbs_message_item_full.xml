@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<org.peercast.pecaviewer.view.EventThroughLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:layout_marginLeft="8dp"
+
+    android:layout_marginRight="8dp"
+    android:layout_marginTop="12dp"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="false"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/vNo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:minWidth="30sp"
+            android:paddingLeft="5dp"
+            android:paddingRight="10dp"
+            android:text="774"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/vName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:minWidth="30sp"
+            android:paddingRight="10dp"
+            android:singleLine="true"
+            android:text="No Name" />
+
+        <TextView
+            android:id="@+id/vDateTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:minWidth="30sp"
+            android:paddingRight="5dp"
+            android:singleLine="true"
+            android:text="2016/01/01 00:00:00" />
+
+
+        <TextView
+            android:id="@+id/vId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:minWidth="30sp"
+            android:paddingRight="1dp"
+            android:singleLine="true"
+            android:text="idABCDEF(1/2)" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="3dp"
+        android:paddingTop="3dp">
+
+        <TextView
+            android:id="@+id/vMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="3dp"
+            android:text="This is Message"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+    </FrameLayout>
+
+<!--
+
+    <include layout="@layout/bbs_res_item_marker" />
+-->
+
+</org.peercast.pecaviewer.view.EventThroughLinearLayout>

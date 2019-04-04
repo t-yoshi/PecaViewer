@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:bind="http://schemas.android.com/apk/res-auto"
+        xmlns:peca="http://schemas.android.com/apk/res-auto"
+        tools:ignore="RtlHardcoded">
+
+    <data>
+
+
+        <variable
+                name="playerViewModel"
+                type="org.peercast.pecaviewer.player.PlayerViewModel"/>
+        <variable
+                name="appViewModel"
+                type="org.peercast.pecaviewer.AppViewModel"/>
+
+        <import type="android.view.View"/>
+
+
+    </data>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                >
+
+            <org.videolan.libvlc.util.VLCVideoLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:id="@+id/vVLCVideoLayout"/>
+
+            <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:focusable="true"
+                    peca:visibleAnimate="@{safeUnbox(playerViewModel.isControlsViewVisible)}">
+
+                <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="?android:attr/actionBarSize"
+                        android:layout_gravity="top|right"
+                        android:gravity="center_vertical">
+                    <ImageView
+                            android:id="@+id/vFullScreen"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            peca:srcCompat="@{safeUnbox(playerViewModel.isFullScreenMode) ? @drawable/ic_fullscreen_exit_white_36dp : @drawable/ic_fullscreen_white_36dp}"
+                            />
+                    <androidx.appcompat.widget.ActionMenuView
+                            android:id="@+id/vPlayerMenu"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            />
+                </LinearLayout>
+<!--
+android:visibility="@{playerViewModel.fullScreenModeIcon != null ? View.VISIBLE : View.GONE}"
+style="@style/Widget.AppCompat.ActionButton.Overflow"android:theme="@style/AppTheme.OverflowButtonStyle"-->
+                <ImageButton
+                        android:id="@+id/vPlay"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:alpha="0.8"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="0dp"
+                        android:scaleType="fitCenter"
+                        android:tint="@color/grey_300"
+                        android:visibility="visible"
+                        android:layout_gravity="center"
+                        peca:srcCompat="@{safeUnbox(playerViewModel.isPlaying) ? @drawable/ic_pause_circle_filled_black_96dp : @drawable/ic_play_circle_filled_black_96dp}"/>
+            </FrameLayout>
+        </FrameLayout>
+
+
+        <include
+                layout="@layout/player_toolbar"
+                bind:playerViewModel="@{playerViewModel}"
+                bind:appViewModel="@{appViewModel}"/>
+
+
+    </LinearLayout>
+
+</layout>

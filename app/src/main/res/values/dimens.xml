@@ -1,0 +1,3 @@
+<resources>
+    <dimen name="player_toolbar_padding_right">0dp</dimen>
+</resources>

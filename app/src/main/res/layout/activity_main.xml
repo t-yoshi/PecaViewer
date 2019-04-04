@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:peca="http://schemas.android.com/apk/res-auto"
+        tools:ignore="RtlHardcoded">
+
+    <data>
+
+        <variable
+                name="chatViewModel"
+                type="org.peercast.pecaviewer.chat.ChatViewModel"/>
+        <variable
+                name="playerViewModel"
+                type="org.peercast.pecaviewer.player.PlayerViewModel"/>
+
+        <import type="android.view.View"/>
+        <import type="android.text.TextUtils"/>
+    </data>
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <com.sothree.slidinguppanel.SlidingUpPanelLayout
+                android:id="@+id/vSlidingUpPanel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/grey_400"
+                app:umanoAnchorPoint="0.40"
+                app:umanoPanelHeight="?android:attr/actionBarSize"
+                app:umanoShadowHeight="3dp"
+                app:umanoInitialState="collapsed"
+                app:umanoFadeColor="@android:color/transparent"
+                android:gravity="top"
+                >
+
+            <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/vChatFragmentContainer">
+
+                <fragment
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:name="org.peercast.pecaviewer.chat.ChatFragment"
+                        android:tag="tag#ChatFragment"
+                        />
+            </FrameLayout>
+
+            <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/vPlayerFragmentContainer"
+                    android:gravity="top"
+                    >
+
+                <fragment
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:name="org.peercast.pecaviewer.player.PlayerFragment"
+                        android:tag="tag#PlayerFragment"/>
+            </FrameLayout>
+
+        </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/vPostButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|right"
+                android:layout_margin="30dp"
+                peca:imageTintList="@{android.R.attr.textColorPrimary}"
+                android:enabled="@{chatViewModel.selectedThreadConnection != null}"
+                android:src="@drawable/ic_mode_edit_black_24dp"
+                />
+
+
+    </FrameLayout>
+</layout>
