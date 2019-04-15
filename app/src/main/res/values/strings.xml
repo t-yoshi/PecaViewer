@@ -4,4 +4,10 @@
     <string name="video_scale">Scale</string>
     <string name="background">Background</string>
     <string name="screenshot" >Screenshot</string>
+
+    <string name="et_seconds_fmt"> %ds</string>
+    <string name="et_minutes_fmt"> %dm</string>
+    <string name="et_hours_fmt"> %dh</string>
+    <string name="et_days_fmt"> %dd</string>
+    <string name="et_years_fmt"> %dy</string>
 </resources>

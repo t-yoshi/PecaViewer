@@ -48,7 +48,6 @@ data class VLCLogMessage(
 }
 
 object VLCLogger {
-
     val liveData = MutableLiveData<VLCLogMessage>()
 
     private fun log(level: Int, ctx: VLCLogContext, msg: String) {

@@ -15,16 +15,21 @@ import androidx.media.session.MediaButtonReceiver
 import org.peercast.pecaviewer.R
 
 
-class NotificationHelper(private val service: Service) {
+class NotificationHelper(
+    private val service: Service,
+    private val sessionToken: MediaSessionCompat.Token
+) {
     private val notificationManager: NotificationManager =
         service.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    //    private val skipToPreviousAction = NotificationCompat.Action(
-//        R.drawable.exo_controls_previous,
-//        context.getString(R.string.notification_skip_to_previous),
-//        MediaButtonReceiver.buildMediaButtonPendingIntent(context, ACTION_SKIP_TO_PREVIOUS))
+    init {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel()
+        }
+    }
+
     private val playAction = NotificationCompat.Action(
-        android.R.drawable.ic_media_play,
+        R.drawable.ic_play_arrow_black_24dp,
         "play",
         MediaButtonReceiver.buildMediaButtonPendingIntent(service, PlaybackStateCompat.ACTION_PLAY)
     )
@@ -44,30 +49,19 @@ class NotificationHelper(private val service: Service) {
         MediaButtonReceiver.buildMediaButtonPendingIntent(service, PlaybackStateCompat.ACTION_STOP)
 
 
-    fun update(sessionToken: MediaSessionCompat.Token){
-        service.startForeground(ID, buildNotification(sessionToken))
+    fun startForeground() {
+        service.startForeground(ID, buildNotification())
     }
 
-    private fun buildNotification(sessionToken: MediaSessionCompat.Token): Notification {
-        if (shouldCreateNowPlayingChannel()) {
-            createNowPlayingChannel()
-        }
+    private fun buildNotification(): Notification {
 
         val controller = MediaControllerCompat(service, sessionToken)
-
-        val playbackState = controller.playbackState
-        playbackState.state
         val builder = NotificationCompat.Builder(service, NOW_PLAYING_CHANNEL)
 
-        // Only add actions for skip back, play/pause, skip forward, based on what's enabled.
-//        var playPauseIndex = 0
-//        if (playbackState.isSkipToPreviousEnabled) {
-//            builder.addAction(skipToPreviousAction)
-//            ++playPauseIndex
-//        }
-        when (playbackState.state) {
+        when (controller.playbackState?.state) {
             PlaybackStateCompat.STATE_PLAYING -> builder.addAction(stopAction)
-//            PlaybackStateCompat.STATE_PAUSED -> builder.addAction(playAction)
+            PlaybackStateCompat.STATE_PAUSED,
+            PlaybackStateCompat.STATE_STOPPED -> builder.addAction(playAction)
         }
 
         val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
@@ -96,26 +90,19 @@ class NotificationHelper(private val service: Service) {
             .build()
     }
 
-    private fun shouldCreateNowPlayingChannel() =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !nowPlayingChannelExists()
-
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun nowPlayingChannelExists() =
-        notificationManager.getNotificationChannel(NOW_PLAYING_CHANNEL) != null
+    private fun createNotificationChannel() {
+        if (notificationManager.getNotificationChannel(NOW_PLAYING_CHANNEL) != null)
+            return
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createNowPlayingChannel() {
-        val notificationChannel = NotificationChannel(
+        val ch = NotificationChannel(
             NOW_PLAYING_CHANNEL,
             "PecaViewer",
             NotificationManager.IMPORTANCE_LOW
         )
-            .apply {
-                //description = context.getString(R.string.notification_channel_description)
-            }
-
-        notificationManager.createNotificationChannel(notificationChannel)
+        notificationManager.createNotificationChannel(ch)
     }
+
 
     companion object {
         private const val NOW_PLAYING_CHANNEL = "PecaViewer"

@@ -1,6 +1,7 @@
 package org.peercast.pecaviewer.chat.net
 
 import okhttp3.ResponseBody
+import org.peercast.pecaviewer.util.DateUtils
 import timber.log.Timber
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -24,6 +25,8 @@ data class MessageBody(
     val body: String,
     val id: String = ""
 ) {
+    val timeInMillis = DateUtils.parse(date)
+
     override fun toString(): String {
         return "$number: ${body.take(24)}"
     }

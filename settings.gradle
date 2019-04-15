@@ -1,1 +1,1 @@
-include ':app', ':vlc', ':vlcext', ':slidinguppanel', ':swipyrefreshlayout'
+include ':app', ':vlcext', ':slidinguppanel', ':swipyrefreshlayout', ':libvlc', ':libpeercast'

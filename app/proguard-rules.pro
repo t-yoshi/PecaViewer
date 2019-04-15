@@ -19,3 +19,15 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+-ignorewarnings
+
+#必要-> CastException: java.lang.Class cannot be cast to java.lang.reflect.ParameterizedType
+-keepattributes * #Signature
+
+#必要-> デバッグが困難になる
+-keepnames class ** { *; }
+
+-keep class org.videolan.libvlc.** { *; }
+-keepclassmembers class org.videolan.libvlc.** { *; }
+-keep class com.github.t_yoshi.vlcext.** { *; }
+-keepclassmembers class com.github.t_yoshi.vlcext.** { *; }

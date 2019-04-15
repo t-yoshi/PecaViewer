@@ -25,6 +25,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.viewModel
+import org.peercast.core.lib.LibPeerCast
 import org.peercast.pecaplay.PecaPlayIntent
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.chat.PostMessageDialogFragment
@@ -91,7 +92,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             }
         })
 
-        intent.getStringExtra(PecaPlayIntent.EXTRA_CONTACT_URL)?.let {
+        intent.getStringExtra(LibPeerCast.EXTRA_CONTACT_URL)?.let {
             chatViewModel.presenter.loadUrl(it)
         }
 
@@ -193,10 +194,12 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                     vChatFragmentContainer.updatePadding(bottom = b - vToolbar.height)
                     chatViewModel.isToolbarVisible.value = true
                 }
-                else -> {
+                SlidingUpPanelLayout.PanelState.EXPANDED,
+                SlidingUpPanelLayout.PanelState.COLLAPSED -> {
                     vPlayerFragmentContainer.updatePadding(top = 0)
                     vChatFragmentContainer.updatePadding(bottom = 0)
                 }
+                else -> {}
             }
             when (newState) {
                 //プレーヤー前面

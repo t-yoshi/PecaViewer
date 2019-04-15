@@ -11,27 +11,31 @@
     </data>
 
 
-    <LinearLayout
-            android:orientation="horizontal"
+    <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="2dp"
             >
 
         <View
+                android:id="@+id/vMark"
                 android:layout_width="3dp"
                 android:layout_height="match_parent"
                 android:layout_marginRight="2dp"
                 android:layout_marginLeft="2dp"
                 android:visibility="@{viewModel.isLast ? View.VISIBLE: View.INVISIBLE}"
+                android:layout_alignParentLeft="true"
                 android:background="@color/orange_500"/>
 
         <TextView
+                android:id="@+id/vNumber"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="30sp"
                 android:gravity="top|left"
                 android:textStyle="bold"
+                android:layout_toRightOf="@id/vMark"
+                android:layout_alignParentTop="true"
                 android:text="@{viewModel.number}"
                 android:textAppearance="?attr/textAppearanceListItem"
                 android:paddingRight="3dp"
@@ -40,18 +44,26 @@
         <TextView
                 android:id="@+id/vBody"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:textAppearance="?attr/textAppearanceListItem"
                 android:text="@{viewModel.body}"
                 android:textIsSelectable="true"
                 android:autoLink="web"
+                android:layout_toRightOf="@+id/vNumber"
+                android:layout_alignParentRight="true"
                 />
-<!---->
-        <Space
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="match_parent"/>
-    </LinearLayout>
+
+        <TextView
+                android:id="@+id/vElapsedTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                android:alpha="0.4"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@{viewModel.elapsedTime}"
+                />
+    </RelativeLayout>
 
 
 </layout>
