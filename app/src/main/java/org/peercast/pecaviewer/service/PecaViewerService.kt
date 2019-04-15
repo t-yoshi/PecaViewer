@@ -17,14 +17,18 @@ import com.github.t_yoshi.vlcext.VLCExt
 import com.github.t_yoshi.vlcext.VLCLogger
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
-import org.peercast.core.Channel
-import org.peercast.core.PeerCastController
-import org.peercast.pecaplay.PecaPlayIntent
+import org.peercast.core.lib.LibPeerCast
+import org.peercast.core.lib.PeerCastController
+import org.peercast.core.lib.PeerCastRpcClient
+import org.peercast.core.lib.rpc.Channel
+import org.peercast.core.lib.rpc.ConnectionStatus
+import org.peercast.core.lib.rpc.Status
 import org.peercast.pecaviewer.AppPreference
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.util.VLCVideoLayout
 import timber.log.Timber
+import java.lang.ref.WeakReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.properties.Delegates
 
@@ -33,6 +37,11 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
 
     private val job = Job()
     private lateinit var libVLC: LibVLC
+    /**
+     *  オリジナルの[org.videolan.libvlc.MediaPlayer]は
+     *  DecorViewのサイズを元にしているので全画面表示しかできない。
+     *  全画面でない[VLCVideoLayout]内でも表示できるように[org.videolan.libvlc.VideoHelper]にパッチを当てている。
+     * */
     private lateinit var player: MediaPlayer
     private lateinit var audioManager: AudioManager
     override lateinit var mediaSession: MediaSessionCompat
@@ -52,11 +61,11 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         player.setEventListener(mediaPlayerEventListener)
         notificationManager = NotificationManagerCompat.from(this)
-        notificationHelper = NotificationHelper(this)
 
         mediaSession = MediaSessionCompat(this, TAG).also {
             it.setCallback(sessionCallback)
         }
+        notificationHelper = NotificationHelper(this, mediaSession.sessionToken)
 
         PeerCastController.from(this).also {
             if (it.isInstalled) {
@@ -130,19 +139,19 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, playingUrl.toString())
                 .putStringFromExtras(
                     MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE,
-                    PecaPlayIntent.EXTRA_NAME
+                    LibPeerCast.EXTRA_NAME
                 )
                 .putStringFromExtras(
                     MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE,
-                    PecaPlayIntent.EXTRA_COMMENT
+                    LibPeerCast.EXTRA_COMMENT
                 )
                 .putStringFromExtras(
                     MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION,
-                    PecaPlayIntent.EXTRA_DESCRIPTION
+                    LibPeerCast.EXTRA_DESCRIPTION
                 )
                 .putStringFromExtras(
                     METADATA_KEY_CONTACT_URL,
-                    PecaPlayIntent.EXTRA_CONTACT_URL
+                    LibPeerCast.EXTRA_CONTACT_URL
                 )
                 .build()
             mediaSession.setMetadata(m)
@@ -155,9 +164,13 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
             playingUrl = uri
             metaFromPecaPlayIntentExtra(extras)
 
+            //FIX: Serviceが死んでいるのにOnAudioFocusChangeListenerが残っていてクラッシュする
+            val serviceRef = WeakReference(this@PecaViewerService)
             val r = AudioManagerCompat.requestAudioFocus(audioManager, focusRequest {
-                if (player.isPlaying && it != AudioManager.AUDIOFOCUS_GAIN) {
-                    player.stop()
+                serviceRef.get()?.let { s ->
+                    if (s.player.isPlaying && it != AudioManager.AUDIOFOCUS_GAIN) {
+                        s.player.pause()
+                    }
                 }
             })
 
@@ -181,16 +194,13 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
 
     private val peerCastServiceEventHandler = object : PeerCastController.EventListener, Runnable {
         private val handler = Handler(Looper.getMainLooper())
+        private var rpcClient : PeerCastRpcClient? = null
         override fun run() {
             launch {
-                peerCastController?.let {
-                    if (!it.isConnected)
-                        return@let
-
-                    it.getChannels().firstOrNull { ch ->
-                        ch.status == Channel.S_RECEIVING && ch.id == sessionCallback.playingChannelId
-                    }?.let(::sendMeta)
-                }
+                rpcClient?.getChannels()?.firstOrNull { ch ->
+                    ch.status.status in listOf(ConnectionStatus.Receiving, ConnectionStatus.RECEIVE) &&
+                            ch.channelId == sessionCallback.playingChannelId
+                }?.let(::sendMeta)
             }
             handler.postDelayed(this, 10_000)
         }
@@ -209,11 +219,13 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
         }
 
         override fun onConnectService(controller: PeerCastController) {
+            rpcClient = PeerCastRpcClient(controller)
             handler.postDelayed(this, 5_000)
         }
 
         override fun onDisconnectService(controller: PeerCastController) {
             handler.removeCallbacks(this)
+            rpcClient = null
         }
     }
 
@@ -256,31 +268,37 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
                 .setBufferedPosition((ev.buffering / 100 * updateTime).toLong())
                 .setActions(IMPLEMENTED_PLAYBACK_ACTIONS).build()
         )
+
+        //バックグラウンド再生中に他アプリの割り込みでPausedになった場合、通知バーから復帰できるように
+        if (!isViewAttached && ev.type == MediaPlayer.Event.Paused) {
+            notificationHelper.startForeground()
+        }
     }
 
 
-    private var isAttached = false
+    private var isViewAttached = false
 
 
     override fun attachViews(view: VLCVideoLayout) {
-        if (isAttached)
+        if (isViewAttached)
             return
+        Status::isFirewalled
         stopForeground(true)
         //Timber.d("attachViews($view)")
         player.attachViews(view, null, false, false)
         player.videoScale = videoScale
-        isAttached = true
+        isViewAttached = true
     }
 
     override fun detachViews() {
-        if (!isAttached)
+        if (!isViewAttached)
             return
         if (player.isPlaying && appPreference.isBackgroundPlaying) {
-            notificationHelper.update(mediaSession.sessionToken)
+            notificationHelper.startForeground()
         }
         //Timber.d("detachViews()")
         player.detachViews()
-        isAttached = false
+        isViewAttached = false
     }
 
     override fun screenShot(path: String, width: Int, height: Int): Boolean {
@@ -296,6 +314,7 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
             peerCastServiceEventHandler.onDisconnectService(it)
             it.unbindService()
         }
+        mediaSession.setCallback(null)
         mediaSession.release()
         detachViews()
         player.release()
