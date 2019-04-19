@@ -90,9 +90,8 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1'
 
-    //implementation 'org.apache.commons:commons-lang3:3.8.1'
+    implementation 'com.github.t-yoshi.peca-android:libpeercast:3.0.0-alpha00'
 
-    implementation project(':libpeercast')
     implementation project(':libvlc')
     implementation project(':slidinguppanel')
     implementation project(':swipyrefreshlayout')
