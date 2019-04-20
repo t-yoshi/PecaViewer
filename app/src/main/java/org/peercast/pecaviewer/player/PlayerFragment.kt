@@ -68,7 +68,7 @@ class PlayerFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return FragmentPlayerBinding.inflate(inflater, container, false).let {
-            it.lifecycleOwner = this
+            it.lifecycleOwner = viewLifecycleOwner
             it.appViewModel = appViewModel
             it.playerViewModel = playerViewModel
             it.root

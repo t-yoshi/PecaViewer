@@ -68,7 +68,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         return FragmentChatBinding.inflate(inflater, container, false).let {
             it.appViewModel = appViewModel
             it.chatViewModel = chatViewModel
-            it.lifecycleOwner = this
+            it.lifecycleOwner = viewLifecycleOwner
             it.root
         }
     }
