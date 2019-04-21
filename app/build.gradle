@@ -80,7 +80,7 @@ dependencies {
     implementation "org.koin:koin-android:$koin_version"
     implementation "org.koin:koin-androidx-viewmodel:$koin_version"
 
-    annotationProcessor 'androidx.databinding:databinding-compiler:3.3.2'
+    annotationProcessor 'androidx.databinding:databinding-compiler:3.4.0'
 
     implementation 'com.squareup.retrofit2:retrofit:2.5.0'
     implementation 'com.squareup.retrofit2:converter-moshi:2.5.0'
@@ -90,7 +90,7 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1'
 
-    implementation 'com.github.t-yoshi.peca-android:libpeercast:3.0.0-alpha00'
+    implementation 'com.github.t-yoshi:peca-android:3.0.0-beta00'
 
     implementation project(':libvlc')
     implementation project(':slidinguppanel')
