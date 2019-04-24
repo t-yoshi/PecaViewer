@@ -9,8 +9,8 @@ android {
         applicationId "org.peercast.pecaviewer"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 6010000
-        versionName "6.1.0"
+        versionCode 6010001
+        versionName "6.1.0-01"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     dataBinding {
@@ -90,7 +90,7 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1'
 
-    implementation 'com.github.t-yoshi:peca-android:3.0.0-beta00'
+    implementation 'com.github.t-yoshi:peca-android:3.0.0-rc01'
 
     implementation project(':libvlc')
     implementation project(':slidinguppanel')
