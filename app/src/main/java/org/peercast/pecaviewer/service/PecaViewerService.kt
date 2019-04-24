@@ -22,13 +22,11 @@ import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.PeerCastRpcClient
 import org.peercast.core.lib.rpc.Channel
 import org.peercast.core.lib.rpc.ConnectionStatus
-import org.peercast.core.lib.rpc.Status
 import org.peercast.pecaviewer.AppPreference
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.util.VLCVideoLayout
 import timber.log.Timber
-import java.lang.ref.WeakReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.properties.Delegates
 
@@ -164,13 +162,10 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
             playingUrl = uri
             metaFromPecaPlayIntentExtra(extras)
 
-            //FIX: Serviceが死んでいるのにOnAudioFocusChangeListenerが残っていてクラッシュする
-            val serviceRef = WeakReference(this@PecaViewerService)
             val r = AudioManagerCompat.requestAudioFocus(audioManager, focusRequest {
-                serviceRef.get()?.let { s ->
-                    if (s.player.isPlaying && it != AudioManager.AUDIOFOCUS_GAIN) {
-                        s.player.pause()
-                    }
+                //FIX: Serviceが死んでいるのにOnAudioFocusChangeListenerが残っていてクラッシュする
+                if (!player.isReleased && player.isPlaying && it != AudioManager.AUDIOFOCUS_GAIN) {
+                    player.pause()
                 }
             })
 
@@ -194,7 +189,7 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
 
     private val peerCastServiceEventHandler = object : PeerCastController.EventListener, Runnable {
         private val handler = Handler(Looper.getMainLooper())
-        private var rpcClient : PeerCastRpcClient? = null
+        private var rpcClient: PeerCastRpcClient? = null
         override fun run() {
             launch {
                 rpcClient?.getChannels()?.firstOrNull { ch ->
@@ -282,7 +277,6 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
     override fun attachViews(view: VLCVideoLayout) {
         if (isViewAttached)
             return
-        Status::isFirewalled
         stopForeground(true)
         //Timber.d("attachViews($view)")
         player.attachViews(view, null, false, false)
