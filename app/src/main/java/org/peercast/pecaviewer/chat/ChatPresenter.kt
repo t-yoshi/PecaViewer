@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -23,6 +24,8 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
     var onThreadSelect: (index: Int) -> Unit = {}
         private set
 
+    private var loadingJob: Job? = null
+
     //コンタクトURL。配信者が更新しないかぎり変わらない。
     private var contactUrl = ""
 
@@ -31,9 +34,11 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
         loadUrl(contactUrl, true)
     }
 
+
     /**コンタクトURLを読込む。*/
     fun loadUrl(url: String, isForce: Boolean = false) {
-        if (url.isEmpty())
+        //接続中のリロードは無視
+        if (url.isEmpty() || loadingJob?.isActive == true)
             return
         if (!url.matches("""^https?://.+""".toRegex())) {
             Timber.w("invalid url: $url")
@@ -47,7 +52,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
             if (alternateUrl != url){
                 Timber.i("alternate contact url: $alternateUrl")
             }
-            internalLoadUrl(alternateUrl)
+            loadingJob = internalLoadUrl(alternateUrl)
         }
     }
 
@@ -70,7 +75,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
                     //Timber.d("Thread selected: $thread")
                     chatViewModel.chatToolbarTitle.value = threadConn.threadInfo.title
                     chatViewModel.selectedThreadConnection.value = if (threadConn.isPostable) threadConn else null
-
+                    //スレッドの選択を保存する
                     appPrefs.userSelectedContactUrlMap[contactUrl] = threadConn.threadInfo.browseableUrl
 
                     if (chatConn != threadConn)
