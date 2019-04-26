@@ -82,6 +82,7 @@ class NotificationHelper(
                     it.setLargeIcon(d.iconBitmap)
                 }
             }
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setDeleteIntent(stopPendingIntent)
             .setAutoCancel(true)
             .setSmallIcon(R.drawable.ic_live_tv_black_24dp)
