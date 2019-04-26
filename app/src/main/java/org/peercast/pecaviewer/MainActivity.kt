@@ -234,7 +234,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(STATE_PLAYING, playerViewModel.isPlaying.value ?: false)
+        outState.putBoolean(STATE_PLAYING, playerViewModel.isPlaying.value ?: true)
     }
 
     /**

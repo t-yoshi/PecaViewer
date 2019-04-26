@@ -17,7 +17,7 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a) {
     private val handler = Handler(Looper.getMainLooper())
 
     /**再生中か*/
-    val isPlaying = MutableLiveData<Boolean>(false)
+    val isPlaying = MutableLiveData<Boolean>()
 
     /**コントロールボタンの表示。タッチして数秒後に消える*/
     val isControlsViewVisible = MutableLiveData<Boolean>(false).apply {

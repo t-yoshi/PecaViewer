@@ -89,7 +89,7 @@ class PlayerFragment : Fragment() {
 
         vPlay.setOnClickListener {
             mediaController?.transportControls?.run {
-                if (playerViewModel.isPlaying.value!!)
+                if (playerViewModel.isPlaying.value == true)
                     stop()
                 else
                     play()
