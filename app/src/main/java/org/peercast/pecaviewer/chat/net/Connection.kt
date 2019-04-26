@@ -152,8 +152,8 @@ class MockBbsConnection private constructor(private val url: String): ChatConnec
     }
 }
 
-/**指定のURLを開き、 [ChatConnection] or [ChatThreadConnection]のいずれかを返す。
- * @throws ChatConnectionException
+/**
+ * 指定のURLを開き、 [ChatConnection] or [ChatThreadConnection]のいずれかを返す。
  * */
 suspend fun openChatConnection(url: String) : ChatConnection {
     listOf(
