@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
 
         appViewModel.serviceLiveData.observe(this, Observer {
-            if (streamUrl.scheme != "pecaplay")
+            if (it == null || streamUrl.scheme != "pecaplay")
                 return@Observer
             //通知バーをタップして復帰できるように
             val pi = createTaskStackBuilder(streamUrl, intent.extras)

@@ -22,6 +22,7 @@ import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.PeerCastRpcClient
 import org.peercast.core.lib.rpc.Channel
 import org.peercast.core.lib.rpc.ConnectionStatus
+import org.peercast.core.lib.rpc.JsonRpcException
 import org.peercast.pecaviewer.AppPreference
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.MediaPlayer
@@ -192,10 +193,14 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
         private var rpcClient: PeerCastRpcClient? = null
         override fun run() {
             launch {
-                rpcClient?.getChannels()?.firstOrNull { ch ->
-                    ch.status.status in listOf(ConnectionStatus.Receiving, ConnectionStatus.RECEIVE) &&
-                            ch.channelId == sessionCallback.playingChannelId
-                }?.let(::sendMeta)
+                try {
+                    rpcClient?.getChannels()?.firstOrNull { ch ->
+                        ch.status.status in listOf(ConnectionStatus.Receiving, ConnectionStatus.RECEIVE) &&
+                                ch.channelId == sessionCallback.playingChannelId
+                    }?.let(::sendMeta)
+                } catch (e: JsonRpcException){
+                    Timber.e(e)
+                }
             }
             handler.postDelayed(this, 10_000)
         }
