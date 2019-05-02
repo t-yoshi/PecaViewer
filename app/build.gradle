@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'io.fabric'
 
 android {
     compileSdkVersion 28
@@ -9,15 +10,15 @@ android {
         applicationId "org.peercast.pecaviewer"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 6010003
-        versionName "6.1.0-03"
+        versionCode 6010100
+        versionName "6.1.1-00"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     dataBinding {
         enabled = true
     }
     kapt {
-        javacOptions{
+        javacOptions {
             // Increase the max count of errors from annotation processors.
             // Default is 100.
             option("-Xmaxerrs", 500)
@@ -90,7 +91,10 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1'
 
-    implementation 'com.github.t-yoshi:peca-android:3.0.0-rc01'
+    implementation 'com.github.t-yoshi:peca-android:3.0.0-03'
+
+    implementation 'com.google.firebase:firebase-core:16.0.8'
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.0'
 
     implementation project(':libvlc')
     implementation project(':slidinguppanel')
@@ -101,3 +105,5 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
 }
+
+apply plugin: 'com.google.gms.google-services'

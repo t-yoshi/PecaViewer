@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1029269409607",
+    "firebase_url": "https://pecaviewer.firebaseio.com",
+    "project_id": "pecaviewer",
+    "storage_bucket": "pecaviewer.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1029269409607:android:5356f2c0b338c196",
+        "android_client_info": {
+          "package_name": "org.peercast.pecaviewer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1029269409607-bofoli5q1hanl25johs7nlkr3i63f7vt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB44e_f4mAguORNVqEGJksDCxL7myrVnqs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1029269409607-bofoli5q1hanl25johs7nlkr3i63f7vt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

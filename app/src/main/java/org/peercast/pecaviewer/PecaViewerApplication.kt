@@ -57,4 +57,10 @@ private class ReleaseTree :  Timber.DebugTree() {
     override fun isLoggable(tag: String?, priority: Int): Boolean {
         return priority >= Log.INFO || BuildConfig.DEBUG
     }
+
+    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+        super.log(priority, tag, message, t)
+        if (t != null)
+            Crashlytics.logException(t)
+    }
 }
