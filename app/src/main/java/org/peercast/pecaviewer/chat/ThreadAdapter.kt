@@ -9,10 +9,6 @@ import org.peercast.pecaviewer.databinding.BbsThreadItemBinding
 import kotlin.properties.Delegates
 
 class ThreadAdapter(private val onSelectThread: (ChatThreadConnection.Info, Int)->Unit) : RecyclerView.Adapter<ThreadAdapter.ViewHolder>() {
-    init {
-        setHasStableIds(true)
-    }
-
     var threads: List<ChatThreadConnection.Info> = emptyList()
     var selectedPosition by Delegates.observable(-1) { _, oldVal, newVal ->
         notifyItemChanged(oldVal)
@@ -37,12 +33,6 @@ class ThreadAdapter(private val onSelectThread: (ChatThreadConnection.Info, Int)
     }
 
     override fun getItemCount(): Int = threads.size
-
-    override fun getItemId(position: Int): Long {
-        return threads[position].run {
-            title.hashCode() * 31L + creationDate.hashCode()
-        }
-    }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val thread = threads[position]
