@@ -5,9 +5,11 @@ import android.app.UiModeManager
 import android.content.Context
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import com.crashlytics.android.Crashlytics
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import org.peercast.pecaviewer.chat.ChatViewModel
@@ -22,13 +24,15 @@ private val appModule = module {
 }
 
 class PecaViewerApplication : Application() {
+    private lateinit var koinApp: KoinApplication
 
     override fun onCreate() {
         super.onCreate()
 
         Timber.plant(ReleaseTree())
 
-        startKoin {
+        //インスタンスを保持。メモリ使用量が多い為かKoin内のstatic変数が消えることがある。
+        koinApp = startKoin {
             androidContext(this@PecaViewerApplication)
             modules(appModule)
         }
