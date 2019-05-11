@@ -85,7 +85,6 @@ class NotificationHelper(
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setDeleteIntent(stopPendingIntent)
             .setAutoCancel(true)
-            .setSmallIcon(R.drawable.ic_live_tv_black_24dp)
             .setStyle(mediaStyle)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
