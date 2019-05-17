@@ -212,7 +212,7 @@ class ShitarabaBbsConnection(
 
     private suspend fun initLoad(): ShitarabaBbsConnection {
         try {
-            baseInfo = api.loadBoardInfo(boardDir, boardNumber).exAwait().body()!!
+            baseInfo = api.loadBoardInfo(boardDir, boardNumber).exAwait().body() ?: throw IOException("body() returned null")
             threadConnections = api.loadThreadInfo(boardDir, boardNumber).exAwait().body()?.map {
                 it.browseableUrl = "${BASE_URL}bbs/read.cgi/${baseInfo.dir}/${baseInfo.bbsNumber}/${it.number}/"
                 ShitarabaBbsThreadConnection(this, it)
