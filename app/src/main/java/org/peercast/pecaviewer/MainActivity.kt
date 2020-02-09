@@ -178,7 +178,13 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         }
     }
 
-    private val panelSlideListener = object : SlidingUpPanelLayout.SimplePanelSlideListener() {
+    private val panelSlideListener = object : SlidingUpPanelLayout.PanelSlideListener {
+        override fun onPanelSlide(panel: View, __slideOffset: Float) {
+            val b = vPlayerFragmentContainer.bottom
+            vPlayerFragmentContainer.updatePadding(top = panel.height - b)
+            vChatFragmentContainer.updatePadding(bottom = b - vToolbar.height)
+        }
+
         override fun onPanelStateChanged(
             panel: View,
             previousState: SlidingUpPanelLayout.PanelState,
@@ -189,9 +195,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                 SlidingUpPanelLayout.PanelState.ANCHORED -> {
                     //Timber.d("vPlayerFragmentContainer=$vPlayerFragmentContainer")
                     //Timber.d("vChatFragmentContainer=$vChatFragmentContainer")
-                    val b = vPlayerFragmentContainer.bottom
-                    vPlayerFragmentContainer.updatePadding(top = panel.height - b)
-                    vChatFragmentContainer.updatePadding(bottom = b - vToolbar.height)
+                    onPanelSlide(panel, 0f)
                     chatViewModel.isToolbarVisible.value = true
                 }
                 SlidingUpPanelLayout.PanelState.EXPANDED,
@@ -199,7 +203,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                     vPlayerFragmentContainer.updatePadding(top = 0)
                     vChatFragmentContainer.updatePadding(bottom = 0)
                 }
-                else -> {}
+                else -> {
+                }
             }
             when (newState) {
                 //プレーヤー前面
