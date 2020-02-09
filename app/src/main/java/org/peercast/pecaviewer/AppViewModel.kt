@@ -19,7 +19,6 @@ class AppViewModel(private val a: Application) : AndroidViewModel(a), KoinCompon
         COLLAPSED=1,
         ANCHORED=2
     */
-    @Deprecated("")
     val slidingPanelState = MutableLiveData<Int>()
 
     val serviceLiveData = MutableLiveData<IPecaViewerService>()

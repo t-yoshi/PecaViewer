@@ -8,14 +8,17 @@ import android.view.*
 import androidx.core.content.FileProvider
 import androidx.core.view.children
 import androidx.core.view.doOnLayout
+import androidx.core.view.isInvisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import com.github.t_yoshi.vlcext.VLCLogMessage
 import kotlinx.android.synthetic.main.fragment_player.*
+import kotlinx.android.synthetic.main.player_toolbar.*
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.AppPreference
 import org.peercast.pecaviewer.AppViewModel
+import org.peercast.pecaviewer.MainActivity
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.databinding.FragmentPlayerBinding
 import org.peercast.pecaviewer.service.IPecaViewerService
@@ -66,7 +69,11 @@ class PlayerFragment : Fragment() {
         })
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return FragmentPlayerBinding.inflate(inflater, container, false).let {
             it.lifecycleOwner = viewLifecycleOwner
             it.appViewModel = appViewModel
@@ -81,6 +88,10 @@ class PlayerFragment : Fragment() {
             MenuInflater(it.context).inflate(R.menu.menu_player, it.menu)
             onPrepareOptionsMenu(it.menu)
             it.setOnMenuItemClickListener(::onOptionsItemSelected)
+        }
+
+        vNavigation.setOnClickListener {
+            (activity as? MainActivity)?.navigationButtonClicked()
         }
 
         view.setOnClickListener {
@@ -114,8 +125,8 @@ class PlayerFragment : Fragment() {
     override fun onPrepareOptionsMenu(menu: Menu) {
         val scale = appPreference.videoScale
         menu.findItem(R.id.menu_scale).subMenu.children.forEachIndexed { i, mi ->
-           mi.isChecked = i == scale.ordinal
-           mi.isCheckable = i == scale.ordinal
+            mi.isChecked = i == scale.ordinal
+            mi.isCheckable = i == scale.ordinal
         }
         menu.findItem(R.id.menu_background).isChecked = appPreference.isBackgroundPlaying
         //menu.findItem(R.id.menu_screenshot).isEnabled = mediaController?.playbackState?.state == PlaybackStateCompat.STATE_PLAYING
@@ -152,7 +163,9 @@ class PlayerFragment : Fragment() {
 
     private fun invokeScreenShot() {
         val c = context!!
-        val title = mediaController?.metadata?.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE) ?: "Screenshot"
+        val title =
+            mediaController?.metadata?.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE)
+                ?: "Screenshot"
         val f = File(c.filesDir, "$title.png")
         if (service?.screenShot(f.absolutePath) != true)
             return
@@ -175,6 +188,7 @@ class PlayerFragment : Fragment() {
 
     override fun onPause() {
         super.onPause()
+        vVLCVideoLayout.isInvisible = true
         service?.detachViews()
 
         if (!appPreference.isBackgroundPlaying && !isTemporaryBackgroundPlaying) {
@@ -186,6 +200,7 @@ class PlayerFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         service?.attachViews(vVLCVideoLayout)
+        vVLCVideoLayout.isInvisible = false
     }
 
 

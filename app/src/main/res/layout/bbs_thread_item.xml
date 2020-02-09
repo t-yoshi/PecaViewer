@@ -6,7 +6,7 @@
     <data>
         <variable
                 name="viewModel"
-                type="org.peercast.pecaviewer.chat.ThreadAdapter.ViewModel"/>
+                type="org.peercast.pecaviewer.chat.adapter.ThreadAdapter.ViewModel"/>
         <import type="android.view.View"/>
 
     </data>

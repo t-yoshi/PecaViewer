@@ -1,29 +1,30 @@
 package org.peercast.pecaviewer.chat
 
-import androidx.lifecycle.LiveData
+import androidx.annotation.MainThread
 import androidx.lifecycle.viewModelScope
-import androidx.paging.LivePagedListBuilder
-import androidx.paging.PagedList
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.core.KoinComponent
 import org.koin.core.inject
 import org.peercast.pecaviewer.AppPreference
-import org.peercast.pecaviewer.chat.net.ChatConnection
-import org.peercast.pecaviewer.chat.net.ChatThreadConnection
-import org.peercast.pecaviewer.chat.net.MessageBody
-import org.peercast.pecaviewer.chat.net.openChatConnection
+import org.peercast.pecaviewer.chat.net2.IBoardConnection
+import org.peercast.pecaviewer.chat.net2.IBoardThreadConnection
+import org.peercast.pecaviewer.chat.net2.IThreadInfo
+import org.peercast.pecaviewer.chat.net2.openBoardConnection
+import org.peercast.pecaviewer.util.localizedSystemMessage
 import timber.log.Timber
 import java.io.IOException
 
-class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
+class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent, CoroutineScope {
     private val appPrefs by inject<AppPreference>()
-    private var chatConn: ChatConnection? = null
+    private var boardConn: IBoardConnection? = null
+        set(value) {
+            field = value
+            chatViewModel.chatToolbarTitle.value = value?.info?.title
+        }
 
-    /**[ChatViewModel.threadInfoLiveData] の中からスレッドを選択したら呼び出す。*/
-    var onThreadSelect: (index: Int) -> Unit = {}
-        private set
-
+    override val coroutineContext = chatViewModel.viewModelScope.coroutineContext
     private var loadingJob: Job? = null
 
     //コンタクトURL。配信者が更新しないかぎり変わらない。
@@ -32,6 +33,33 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
     /**スレッドのリストを含め、全体を再読込する。*/
     fun reload() {
         loadUrl(contactUrl, true)
+    }
+
+    fun reloadThread() {
+        launch {
+            chatViewModel.isMessageListRefreshing.value = true
+            try {
+                val conn = boardConn
+                if (conn is IBoardThreadConnection) {
+                    chatViewModel.selectedThreadPoster.value =
+                        if (conn.info.isPostable) conn else null
+
+                    val messages = conn.loadMessages()
+                    if (messages != chatViewModel.messageLiveData.value) {
+                        chatViewModel.messageLiveData.value = messages
+                        postNetworkErrorMessage("")
+                    } else {
+                        //postNetworkErrorMessage("have not changed.")
+                    }
+                } else {
+                    postNetworkErrorMessage("thread is not selected.")
+                }
+            } catch (e: IOException) {
+                postNetworkErrorMessage(e.localizedSystemMessage())
+            } finally {
+                chatViewModel.isMessageListRefreshing.value = false
+            }
+        }
     }
 
 
@@ -49,78 +77,70 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
             contactUrl = url
             //以前にスレッドを選択していたのなら
             val alternateUrl = appPrefs.userSelectedContactUrlMap[url]
-            if (alternateUrl != url){
+            if (alternateUrl != url) {
                 Timber.i("alternate contact url: $alternateUrl")
             }
-            loadingJob = internalLoadUrl(alternateUrl)
+            loadingJob = launch {
+                doLoadUrl(alternateUrl)
+            }
         }
     }
 
-    private fun internalLoadUrl(url: String) = chatViewModel.viewModelScope.launch {
-        Timber.d("internalLoadUrl: $url")
+    @MainThread
+    private suspend fun doLoadUrl(url: String) {
+        Timber.d("doLoadUrl: $url")
 
         try {
             chatViewModel.isThreadListRefreshing.value = true
-            val baseConn = openChatConnection(url)
+            val conn = openBoardConnection(url)
+            boardConn = conn
 
-            val index = baseConn.threadConnections.indexOf(baseConn)
+            chatViewModel.threadLiveData.postValue(conn.loadThreads())
 
-            chatViewModel.selectedThreadIndex.value = index
-            chatViewModel.threadInfoLiveData.value = baseConn.threadConnections.map { it.threadInfo }
-            chatViewModel.chatToolbarTitle.value = baseConn.baseInfo.title
-
-            onThreadSelect = {
-                val threadConn = baseConn.threadConnections.getOrNull(it)
-                if (threadConn is ChatThreadConnection) {
-                    //Timber.d("Thread selected: $thread")
-                    chatViewModel.chatToolbarTitle.value = threadConn.threadInfo.title
-                    chatViewModel.selectedThreadConnection.value = if (threadConn.isPostable) threadConn else null
-                    //スレッドの選択を保存する
-                    appPrefs.userSelectedContactUrlMap[contactUrl] = threadConn.threadInfo.browseableUrl
-
-                    if (chatConn != threadConn)
-                        chatViewModel.lastMessage = null
-
-                    chatConn = threadConn
-                } else {
-                    chatConn = null
-                    chatViewModel.selectedThreadConnection.value = null
-                    Timber.w("Thread not selected: $url")
-                }
-
-                chatViewModel.messagePagedListLiveData.value?.dataSource?.invalidate()
+            if (conn is IBoardThreadConnection) {
+                threadSelect(conn.info)
+            } else {
+                threadSelect(null)
             }
-
-            if (index >= 0) {
-                onThreadSelect(index)
-            }
-
+            postNetworkErrorMessage("")
         } catch (e: IOException) {
-            Timber.e(e)
+            threadSelect(null)
+            postNetworkErrorMessage(e.localizedSystemMessage())
         } finally {
             chatViewModel.isThreadListRefreshing.value = false
         }
     }
 
-    /**@see [ChatViewModel.messagePagedListLiveData]*/
-    fun createMessageLiveData(): LiveData<PagedList<MessageBody>> {
-        return LivePagedListBuilder(
-            BBSDataSourceFactory(chatViewModel.viewModelScope, chatViewModel.isMessageListRefreshing) {
-                chatConn as? ChatThreadConnection
-            }, PAGED_LIST_CONFIG
-        ).setBoundaryCallback(object : PagedList.BoundaryCallback<MessageBody>(){
-            override fun onItemAtEndLoaded(itemAtEnd: MessageBody) {
-                chatViewModel.lastMessage = itemAtEnd
+    fun threadSelect(info: IThreadInfo?) {
+        chatViewModel.selectedThread.postValue(info)
+
+        if (info == null) {
+            //boardConn = null
+            chatViewModel.selectedThreadPoster.value = null
+            Timber.w("Thread not selected: $contactUrl")
+            return
+        }
+
+        launch {
+            try {
+                val threadConn = boardConn?.openThreadConnection(info) ?: return@launch
+
+                //スレッドの選択を保存する
+                appPrefs.userSelectedContactUrlMap[contactUrl] = info.url
+
+                boardConn = threadConn
+                reloadThread()
+
+            } catch (e: IOException) {
+                postNetworkErrorMessage(e.localizedSystemMessage())
             }
-        }) .build()
+        }
     }
 
-    companion object {
-        private val PAGED_LIST_CONFIG = PagedList.Config.Builder()
-            .setInitialLoadSizeHint(5)
-            .setPageSize(200)
-            .setEnablePlaceholders(false)
-            .build()
+    private fun postNetworkErrorMessage(s: String) {
+        chatViewModel.networkMessage.postValue(s)
     }
+
+
 
 }

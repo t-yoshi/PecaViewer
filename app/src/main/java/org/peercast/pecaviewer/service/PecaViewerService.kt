@@ -73,7 +73,6 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
                 it.bindService()
             }
         }
-
         VLCLogger.register(libVLC)
     }
 
@@ -195,10 +194,13 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
             launch {
                 try {
                     rpcClient?.getChannels()?.firstOrNull { ch ->
-                        ch.status.status in listOf(ConnectionStatus.Receiving, ConnectionStatus.RECEIVE) &&
+                        ch.status.status in listOf(
+                            ConnectionStatus.Receiving,
+                            ConnectionStatus.RECEIVE
+                        ) &&
                                 ch.channelId == sessionCallback.playingChannelId
                     }?.let(::sendMeta)
-                } catch (e: JsonRpcException){
+                } catch (e: JsonRpcException) {
                     Timber.e(e)
                 }
             }
@@ -208,8 +210,14 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
         private fun sendMeta(ch: Channel) {
             mediaSession.setMetadata(
                 MediaMetadataCompat.Builder()
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, sessionCallback.playingChannelId)
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, sessionCallback.playingUrl.toString())
+                    .putString(
+                        MediaMetadataCompat.METADATA_KEY_MEDIA_ID,
+                        sessionCallback.playingChannelId
+                    )
+                    .putString(
+                        MediaMetadataCompat.METADATA_KEY_MEDIA_URI,
+                        sessionCallback.playingUrl.toString()
+                    )
                     .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, ch.info.name)
                     .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, ch.info.comment)
                     .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION, ch.info.desc)
@@ -293,6 +301,7 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
         if (!isViewAttached)
             return
         if (player.isPlaying && appPreference.isBackgroundPlaying) {
+            notificationHelper.takeScreenShotForIcon()
             notificationHelper.startForeground()
         }
         //Timber.d("detachViews()")
@@ -302,7 +311,7 @@ class PecaViewerService : Service(), IPecaViewerService, CoroutineScope {
 
     override fun screenShot(path: String, width: Int, height: Int): Boolean {
         if (!path.endsWith(".png"))
-            throw IllegalArgumentException()
+            throw IllegalArgumentException("suffix isn't png.")
         return player.hasMedia() && VLCExt.videoTakeSnapshot(player, path, width, height)
     }
 

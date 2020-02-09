@@ -11,27 +11,27 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.koin.androidx.viewmodel.ext.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.R
-import org.peercast.pecaviewer.chat.net.ChatThreadConnection
-import org.peercast.pecaviewer.chat.net.PostMessage
+import org.peercast.pecaviewer.chat.net2.IBoardThreadPoster
+import org.peercast.pecaviewer.chat.net2.PostMessage
+import org.peercast.pecaviewer.util.localizedSystemMessage
+import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
-class PostMessageDialogFragment : BottomSheetDialogFragment(), DialogInterface.OnShowListener, CoroutineScope {
+class PostMessageDialogFragment : BottomSheetDialogFragment(), DialogInterface.OnShowListener,
+    CoroutineScope {
     private val job = Job()
     private val chatViewModel by sharedViewModel<ChatViewModel>()
-    private var threadConnection : ChatThreadConnection? = null
+    private lateinit var poster: IBoardThreadPoster
+
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        chatViewModel.selectedThreadConnection.value?.let {
-            threadConnection = it
-        } ?: dismiss()
-
-        //Timber.d("$threadUrl: draft=${chatViewModel.postMessageDraft[threadUrl]}")
+        poster = chatViewModel.selectedThreadPoster.value ?: return dismiss()
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -41,34 +41,34 @@ class PostMessageDialogFragment : BottomSheetDialogFragment(), DialogInterface.O
         }
     }
 
-    private val threadUrl: String
-        get() = threadConnection?.threadInfo?.browseableUrl ?: ""
-
-
     override fun onShow(dialog: DialogInterface) {
+        val u = poster.info.url
         with(dialog as BottomSheetDialog) {
-            chatViewModel.postMessageDraft[threadUrl]?.let(vEdit::setText)
+            chatViewModel.messageDraft[u]?.let(vEdit::setText)
             vSend.setOnClickListener {
                 launch {
-                    threadConnection?.postMessage(PostMessage("", "sage", vEdit.text.toString()))
-                    chatViewModel.postMessageDraft.remove(threadUrl)
+                    postMessage("", null, vEdit.text.toString())
+                    chatViewModel.messageDraft.remove(u)
                     dismiss()
                 }
             }
+            vEdit.hint = "${poster.info.title} (${poster.info.numMessages})"
             vEdit.requestFocus()
 
             vEdit.doOnTextChanged { text, start, count, after ->
-                chatViewModel.postMessageDraft[threadUrl] = text?.toString() ?: ""
+                chatViewModel.messageDraft[u] = text?.toString() ?: ""
                 vSend.isEnabled = text?.isNotEmpty() == true
             }
         }
     }
 
-    override fun onDismiss(dialog: DialogInterface) {
-        super.onDismiss(dialog)
-        chatViewModel.postMessageDraft[threadUrl].let {
-            if (it == null || it.isBlank())
-                chatViewModel.postMessageDraft.remove(threadUrl)
+    private suspend fun postMessage(name: String, mail: String?, body: String) {
+        chatViewModel.networkMessage.value = try {
+            poster.postMessage(
+                PostMessage(name, mail ?: "sage", body)
+            )
+        } catch (e: IOException) {
+            e.localizedSystemMessage()
         }
     }
 

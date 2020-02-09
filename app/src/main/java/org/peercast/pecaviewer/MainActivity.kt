@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.viewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.peercast.core.lib.LibPeerCast
 import org.peercast.pecaplay.PecaPlayIntent
 import org.peercast.pecaviewer.chat.ChatViewModel
@@ -56,7 +56,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
 
-        val binding = DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
+        val binding =
+            DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
         binding.chatViewModel = chatViewModel
         binding.lifecycleOwner = this
 
@@ -92,6 +93,10 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             }
         })
 
+        if (BuildConfig.DEBUG){
+            chatViewModel.presenter.loadUrl("http://2chcrew.geo.jp/ze/test/read.cgi/tete/1468154452/")
+        }
+
         intent.getStringExtra(LibPeerCast.EXTRA_CONTACT_URL)?.let {
             chatViewModel.presenter.loadUrl(it)
         }
@@ -108,7 +113,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         }
 
         if (intent.hasExtra(PecaPlayIntent.EXTRA_NIGHT_MODE))
-            appPreference.isNightMode = intent.getBooleanExtra(PecaPlayIntent.EXTRA_NIGHT_MODE, false)
+            appPreference.isNightMode =
+                intent.getBooleanExtra(PecaPlayIntent.EXTRA_NIGHT_MODE, false)
 
 
         //再生中は自動消灯しない
@@ -124,18 +130,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         vPostButton.setOnClickListener {
             val f = PostMessageDialogFragment()
             f.show(supportFragmentManager, "tag#PostMessageDialogFragment")
-        }
-
-        vNavigation.setOnClickListener {
-            vSlidingUpPanel.run {
-                panelState = when {
-                    anchorPoint < 1f -> SlidingUpPanelLayout.PanelState.ANCHORED
-                    panelState == SlidingUpPanelLayout.PanelState.EXPANDED -> {
-                        SlidingUpPanelLayout.PanelState.COLLAPSED
-                    }
-                    else -> SlidingUpPanelLayout.PanelState.EXPANDED
-                }
-            }
         }
 
         vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
@@ -160,6 +154,19 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             })
         } else {
             initPanelState(appPreference.initPanelState)
+        }
+    }
+
+    //from PlayerFragment.vNavigation
+    fun navigationButtonClicked() {
+        vSlidingUpPanel.run {
+            panelState = when {
+                anchorPoint < 1f -> SlidingUpPanelLayout.PanelState.ANCHORED
+                panelState == SlidingUpPanelLayout.PanelState.EXPANDED -> {
+                    SlidingUpPanelLayout.PanelState.COLLAPSED
+                }
+                else -> SlidingUpPanelLayout.PanelState.EXPANDED
+            }
         }
     }
 

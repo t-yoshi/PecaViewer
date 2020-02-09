@@ -14,12 +14,13 @@ import kotlinx.android.synthetic.main.fragment_chat.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import org.koin.androidx.viewmodel.ext.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.AppViewModel
 import org.peercast.pecaviewer.R
+import org.peercast.pecaviewer.chat.adapter.MessageAdapter
+import org.peercast.pecaviewer.chat.adapter.ThreadAdapter
 import org.peercast.pecaviewer.databinding.FragmentChatBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
-import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
 
@@ -33,38 +34,35 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
     private val chatViewModel by sharedViewModel<ChatViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
 
-    private val messageAdapter = PagedMessageAdapter {
-        it == chatViewModel.lastMessage
-    }
-    private val threadAdapter = ThreadAdapter { thread, position ->
-        Timber.d("selectThread: [$position] $thread")
-        chatViewModel.presenter.onThreadSelect(position)
-    }
+    private val threadAdapter =
+        ThreadAdapter()
+    private val messageAdapter =
+        MessageAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        chatViewModel.let { vm ->
-            vm.messagePagedListLiveData.observe(this, Observer {
-                messageAdapter.submitList(it)
-
-            })
-            vm.threadInfoLiveData.observe(this, Observer {
-                threadAdapter.threads = it
-                threadAdapter.notifyDataSetChanged()
-            })
-            vm.selectedThreadIndex.observe(this, Observer {
-                threadAdapter.selectedPosition = it
-            })
-        }
-
         playerViewModel.channelContactUrl.observe(this, Observer { u ->
             chatViewModel.presenter.loadUrl(u)
         })
-
+        chatViewModel.threadLiveData.observe(this, Observer {
+            threadAdapter.items = it
+        })
+        chatViewModel.selectedThread.observe(this, Observer {
+            threadAdapter.selected = it
+        })
+        chatViewModel.messageLiveData.observe(this, Observer {
+            messageAdapter.setItems(it)
+            scrollToBottom()
+        })
+        threadAdapter.onSelectThread = chatViewModel.presenter::threadSelect
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return FragmentChatBinding.inflate(inflater, container, false).let {
             it.appViewModel = appViewModel
             it.chatViewModel = chatViewModel
@@ -77,7 +75,6 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         super.onViewCreated(view, savedInstanceState)
 
         vMessageList.layoutManager = LinearLayoutManager(view.context)
-        vMessageList.adapter = messageAdapter
         vThreadList.layoutManager = LinearLayoutManager(view.context)
         vThreadList.adapter = threadAdapter
 
@@ -89,6 +86,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         }
         vChatToolbar.setOnMenuItemClickListener(this)
 
+        vMessageList.adapter = messageAdapter
         vMessageList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 chatViewModel.isToolbarVisible.value = true
@@ -97,32 +95,36 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         vMessageList.setOnClickListener {
             chatViewModel.isToolbarVisible.value = true
         }
-        vMessageListRefresh.setOnRefreshListener {
-            messageAdapter.currentList?.dataSource?.invalidate()
-        }
-
         vThreadListRefresh.setOnRefreshListener {
             chatViewModel.presenter.reload()
+        }
+        vMessageListRefresh.setOnRefreshListener {
+            chatViewModel.presenter.reloadThread()
         }
     }
 
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_reload -> {
-                messageAdapter.currentList?.dataSource?.invalidate()
+                chatViewModel.presenter.reloadThread()
             }
             R.id.menu_align_top -> {
                 vMessageList.scrollToPosition(0)
             }
             R.id.menu_align_bottom -> {
-                val n = messageAdapter.itemCount
-                if (n > 0)
-                    vMessageList.scrollToPosition(n - 1)
+                scrollToBottom()
             }
         }
         return true
     }
 
+    private fun scrollToBottom() {
+        val n = vMessageList?.adapter?.itemCount ?: 0
+        if (n > 0) {
+            val manager = vMessageList?.layoutManager as? LinearLayoutManager
+            manager?.scrollToPositionWithOffset(n - 1, 0)
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -130,3 +132,5 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
     }
 
 }
+
+

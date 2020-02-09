@@ -2,17 +2,10 @@ package org.peercast.pecaviewer.util
 
 import android.content.res.Resources
 import android.os.Build
-import kotlinx.coroutines.suspendCancellableCoroutine
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-
 
 
 /**
