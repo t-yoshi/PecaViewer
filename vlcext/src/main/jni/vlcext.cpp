@@ -167,9 +167,7 @@ static struct _ClassCache {
         if (s == nullptr)
             return nullptr;
 
-        if (IsUTF8(s))
-            return env->NewStringUTF(s);
-
+        const char *charset = IsUTF8(s) ? "utf8" : "shift-jis";
         const jsize len = ::strlen(s);
         jbyteArray ba = env->NewByteArray(len);
         if (!ba)
@@ -178,7 +176,7 @@ static struct _ClassCache {
 
         return (jstring) env->NewObject(
                 jc_String, mid_String_init,
-                ba, env->NewStringUTF("shift-jis"));
+                ba, env->NewStringUTF(charset));
     }
 
 private:
