@@ -2,7 +2,6 @@ package org.peercast.pecaviewer.chat.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.databinding.BaseObservable
 import androidx.recyclerview.widget.RecyclerView
 import org.peercast.pecaviewer.chat.net2.IThreadInfo
 import org.peercast.pecaviewer.databinding.BbsThreadItemBinding
@@ -13,7 +12,7 @@ class ThreadAdapter : RecyclerView.Adapter<ThreadAdapter.ViewHolder>() {
             field = value
             notifyDataSetChanged()
         }
-    var onSelectThread: ((IThreadInfo) -> Unit)? = null
+    var onSelectThread: (IThreadInfo) -> Unit = {}
 
     var selected: IThreadInfo? = null
         set(value) {
@@ -23,9 +22,8 @@ class ThreadAdapter : RecyclerView.Adapter<ThreadAdapter.ViewHolder>() {
             notifyDataSetChanged()
         }
 
-    class ViewHolder(binding: BbsThreadItemBinding) : RecyclerView.ViewHolder(binding.root) {
-        val viewModel =
-            ViewModel()
+    class ViewHolder(val binding: BbsThreadItemBinding) : RecyclerView.ViewHolder(binding.root) {
+        val viewModel = ThreadViewModel()
 
         init {
             binding.viewModel = viewModel
@@ -35,32 +33,20 @@ class ThreadAdapter : RecyclerView.Adapter<ThreadAdapter.ViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val binding = BbsThreadItemBinding.inflate(inflater, parent, false)
-        return ViewHolder(
-            binding
-        )
+        return ViewHolder(            binding        )
     }
 
-    override fun getItemCount(): Int = items.size
+    override fun getItemCount() = items.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val thread = items[position]
         holder.itemView.setOnClickListener {
             selected = thread
-            onSelectThread?.invoke(thread)
+            onSelectThread(thread)
+            notifyDataSetChanged()
         }
-        holder.viewModel.run {
-            number = "% 2d".format(position + 1)
-            title = thread.title
-            count = thread.numMessages.toString()
-            isSelected = thread == selected
-            notifyChange()
-        }
+        holder.viewModel.setThreadInfo(thread, position, thread == selected)
+        holder.binding.executePendingBindings()
     }
 
-    class ViewModel : BaseObservable() {
-        var number: CharSequence = ""
-        var title: CharSequence = ""
-        var count: CharSequence = ""
-        var isSelected = false
-    }
 }

@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:bind="http://schemas.android.com/apk/res-auto"
         xmlns:peca="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         tools:ignore="RtlHardcoded">
 
     <data>
+        <variable
+                name="appViewModel"
+                type="org.peercast.pecaviewer.AppViewModel"/>
 
         <variable
                 name="chatViewModel"
@@ -43,25 +47,39 @@
                     android:layout_height="match_parent"
                     android:tag="tag#ChatFragment" />
 
-            <androidx.fragment.app.FragmentContainerView
+            <LinearLayout
                     android:id="@+id/vPlayerFragmentContainer"
-                    android:name="org.peercast.pecaviewer.player.PlayerFragment"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="top"
-                    android:tag="tag#PlayerFragment" />
+                    android:orientation="vertical">
+                <androidx.fragment.app.FragmentContainerView
+                        android:id="@+id/__vPlayerFragmentContainer"
+                        android:name="org.peercast.pecaviewer.player.PlayerFragment"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:tag="tag#PlayerFragment"/>
+
+                <!-- vPlayerToolbar: height=actionBarSize(56dp), layout_gravity=bottom -->
+                <include
+                        layout="@layout/player_toolbar"
+                        bind:appViewModel="@{appViewModel}"
+                        bind:playerViewModel="@{playerViewModel}"/>
+            </LinearLayout>
+
 
         </com.sothree.slidinguppanel.SlidingUpPanelLayout>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/vPostButton"
+                android:id="@+id/vPostDialogButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|right"
                 android:layout_margin="30dp"
                 android:enabled="@{chatViewModel.selectedThreadPoster != null}"
                 android:src="@drawable/ic_mode_edit_black_24dp"
-                peca:imageTintList="@{android.R.attr.textColorPrimary}" />
-
+                peca:imageTintList="@{android.R.attr.textColorPrimary}"
+                />
     </FrameLayout>
 </layout>

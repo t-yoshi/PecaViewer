@@ -1,10 +1,8 @@
 package org.peercast.pecaviewer.chat.net2
 
-import android.text.SpannableStringBuilder
-import android.text.style.URLSpan
 import androidx.core.text.HtmlCompat
-import androidx.core.text.set
 import okhttp3.Request
+import org.peercast.pecaviewer.util.DateUtils
 import org.peercast.pecaviewer.util.SquareUtils
 import org.peercast.pecaviewer.util.runAwait
 import timber.log.Timber
@@ -45,11 +43,12 @@ class BbsClient(val defaultCharset: Charset) {
     class UnsatisfiableRequestException(msg: String) : IOException(msg)
 
     suspend fun post(req: Request): String {
-        return SquareUtils.client.newCall(req).runAwait { res ->
+        val ret = SquareUtils.client.newCall(req).runAwait { res ->
             val body = res.body ?: throw IOException("body returned null.")
             val cs = body.contentType()?.charset() ?: defaultCharset
             body.byteStream().reader(cs).readText()
         }
+        return BbsUtils.stripHtml(ret).trim().replace(RE_SPACE, " ")
     }
 
     companion object {
@@ -66,17 +65,20 @@ class BbsClient(val defaultCharset: Charset) {
                 }
             }
         }
+
+        private val RE_SPACE = """[\s　]+""".toRegex()
     }
 }
 
 
-abstract class BaseBbsBoardInfo(val extras: Map<String, String>) : IBoardInfo {
+abstract class BaseBbsBoardInfo : IBoardInfo {
     override fun hashCode(): Int {
         return javaClass.hashCode() * 31 + url.hashCode()
     }
 
     override fun equals(other: Any?): Boolean {
         return other is BaseBbsBoardInfo &&
+                other.javaClass == javaClass &&
                 other.url == url
     }
 }
@@ -86,16 +88,21 @@ abstract class BaseBbsThreadInfo(
     datPath: String, title_: String
 ) : IThreadInfo {
 
-    final override val title = title_.substringBeforeLast('(')
+    final override val title = BbsUtils.stripHtml(
+        title_.substringBeforeLast('(')
+    )
 
     //XXXX.cgi | XXXX.dat
     val number: String = datPath.substringBefore(".") //.toIntOrNull() ?: 0
 
-    final override val creationDate = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.JAPAN).format(
-        Date((number.toIntOrNull() ?: 0) * 1000L)
-    )
+    final override val creationDate = synchronized(DATE_FORMAT) {
+        DATE_FORMAT.format(
+            Date((number.toIntOrNull() ?: 0) * 1000L)
+        )
+    }
 
-    final override val numMessages = RE_NUM_MESSAGES.find(title_)?.groupValues?.let {
+    //var: レス取得時に変更できるように
+    final override var numMessages = RE_NUM_MESSAGES.find(title_)?.groupValues?.let {
         it[1].toIntOrNull()
     } ?: 0
 
@@ -118,6 +125,7 @@ abstract class BaseBbsThreadInfo(
 
     companion object {
         private val RE_NUM_MESSAGES = """\((\d+)\)$""".toRegex()
+        private val DATE_FORMAT = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.JAPAN)
     }
 }
 
@@ -129,13 +137,13 @@ open class BbsMessage(
     final override val date: CharSequence,
     body: String,
     final override val id: CharSequence
-) : IMessage {
+) : IMessage, IBrowsable {
 
-    final override val body = BbsUtils.applyUrlSpan(
-        BbsUtils.stripHtml(body)
-    )
+    final override val body: CharSequence = BbsUtils.stripHtml(body)
 
-    val timeInMillis = BbsUtils.parseData(date)
+    override val url = "${threadInfo.url}$number"
+
+    val timeInMillis = DateUtils.parseData(date)
 
     override fun toString(): String {
         return "$number: ${body.take(24)}"
@@ -144,58 +152,24 @@ open class BbsMessage(
     override fun equals(other: Any?): Boolean {
         return other is BbsMessage &&
                 other.javaClass == javaClass &&
-                other.threadInfo == threadInfo &&
-                other.number == number
+                other.url == url
     }
 
     override fun hashCode(): Int {
-        return threadInfo.hashCode() * 1009 + number
+        return javaClass.hashCode() * 31 + url.hashCode()
     }
 }
 
 object BbsUtils {
+    private val RE_REMOVE_TAG = """(?is)<(script|style)[ >].+?</\1>""".toRegex()
+
     fun stripHtml(text: String): String {
         return HtmlCompat.fromHtml(
-            text, HtmlCompat.FROM_HTML_MODE_LEGACY
+            RE_REMOVE_TAG.replace(text, ""),
+            HtmlCompat.FROM_HTML_MODE_LEGACY
         ).toString()
     }
 
 
-    private val RE_DATETIME_1 = """(20\d\d)/([01]?\d)/(\d\d).*(\d\d):(\d\d):(\d\d)""".toRegex()
-
-    fun parseData(s: CharSequence, timeZone: String = "Asia/Tokyo"): Long {
-        fun safeGetTimeInMillis(c: Calendar): Long {
-            return try {
-                c.timeInMillis
-            } catch (e: IllegalArgumentException) {
-                0L
-            }
-        }
-
-        val cl = Calendar.getInstance(Locale.JAPAN)
-        RE_DATETIME_1.find(s)?.let { ma ->
-            val a = ma.groupValues.drop(1).map { it.toInt() }
-            cl.set(a[0], a[1] - 1, a[2], a[3], a[4], a[5])
-            cl.timeZone = TimeZone.getTimeZone(timeZone)
-            //Timber.d("d=$cl")
-            return safeGetTimeInMillis(cl)
-        }
-
-        return 0L
-    }
-
-    private val RE_URL = """h?ttps?://[\w\-~/_.$}{#%,:@?&|=+]+""".toRegex()
-
-    fun applyUrlSpan(text: String): CharSequence {
-        val ssb = SpannableStringBuilder(text)
-        RE_URL.findAll(text).forEach { mr ->
-            var u = mr.groupValues[0]
-            if (u.startsWith("ttp"))
-                u = "h$u"
-            ssb[mr.range.first, mr.range.last + 1] = URLSpan(u)
-            //Timber.d("${mr.range}: $u")
-        }
-        return ssb
-    }
 }
 

@@ -1,7 +1,6 @@
 package org.peercast.pecaviewer.util
 
 import android.content.res.Resources
-import android.os.Build
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -28,11 +27,6 @@ fun IOException.localizedSystemMessage(): String {
     } ?: localizedMessage ?: message ?: toString()
 }
 
-
-
-val isAndroidLollipop: Boolean
-    get() = Build.VERSION.SDK_INT in listOf(
-        Build.VERSION_CODES.LOLLIPOP,
-        Build.VERSION_CODES.LOLLIPOP_MR1)
+ 
 
 

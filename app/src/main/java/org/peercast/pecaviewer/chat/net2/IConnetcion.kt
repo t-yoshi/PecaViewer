@@ -1,10 +1,12 @@
 package org.peercast.pecaviewer.chat.net2
 
-
-/**この掲示板の情報*/
-interface IBoardInfo {
+interface IBrowsable {
     /**ブラウザで開くことができるURL*/
     val url: String
+}
+
+/**この掲示板の情報*/
+interface IBoardInfo : IBrowsable {
     val title: String
 }
 
@@ -12,6 +14,7 @@ interface IBoardInfo {
 interface IThreadInfo : IBoardInfo {
     val board: IBoardInfo
     val creationDate: String
+
     /**レス数 不明(-1)*/
     val numMessages: Int
     val isPostable: Boolean
@@ -20,18 +23,21 @@ interface IThreadInfo : IBoardInfo {
 interface IMessage {
     /**レス番号*/
     val number: Int
+
     /**名前*/
     val name: CharSequence
+
     /**メールアドレス*/
     val mail: CharSequence
+
     /**日付*/
     val date: CharSequence
+
     /**本文*/
     val body: CharSequence
+
     /**id*/
     val id: CharSequence
-
-    override fun equals(other: Any?): Boolean
 }
 
 
@@ -54,7 +60,7 @@ interface IBoardConnection {
      * */
     suspend fun loadThreads(): List<IThreadInfo>
 
-    /**ThreadConnectionを開く
+    /**掲示板スレッドへの接続を開く
      * @throws IllegalArgumentException 適切なthreadInfoでない
      * @throws java.io.IOException
      * */
@@ -81,3 +87,15 @@ interface IBoardThreadConnection : IBoardConnection, IBoardThreadPoster {
      * */
     suspend fun loadMessages(): List<IMessage>
 }
+
+val IBoardInfo.boardTopTitle: String
+    get() = when(this){
+        is IThreadInfo-> board.title
+        else -> title
+    }
+
+val IBoardInfo.boardTopUrl: String
+    get() = when(this){
+        is IThreadInfo-> board.url
+        else -> url
+    }

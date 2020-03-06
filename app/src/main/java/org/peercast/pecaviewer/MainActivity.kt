@@ -1,20 +1,18 @@
 package org.peercast.pecaviewer
 
-import android.app.PendingIntent
-import android.app.TaskStackBuilder
-import android.content.Intent
+import android.content.ComponentName
+import android.content.ServiceConnection
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.support.v4.media.session.MediaControllerCompat
+import android.os.IBinder
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.doOnLayout
 import androidx.core.view.updatePadding
-import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import kotlinx.android.synthetic.main.activity_main.*
@@ -25,15 +23,17 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.peercast.core.lib.LibPeerCast
 import org.peercast.pecaplay.PecaPlayIntent
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.chat.PostMessageDialogFragment
 import org.peercast.pecaviewer.databinding.ActivityMainBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
+import org.peercast.pecaviewer.service2.IPlayerService
+import org.peercast.pecaviewer.util.ThemeUtils
 import kotlin.coroutines.CoroutineContext
 
-class MainActivity : AppCompatActivity(), CoroutineScope {
+class MainActivity : AppCompatActivity(),
+    ServiceConnection, CoroutineScope {
 
     private val job = Job()
     override val coroutineContext: CoroutineContext
@@ -43,63 +43,42 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     private val playerViewModel by viewModel<PlayerViewModel>()
     private val chatViewModel by viewModel<ChatViewModel>()
     private val appPreference by inject<AppPreference>()
+    private var onServiceConnect: (IPlayerService) -> Unit = {}
+    private var service: IPlayerService? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
             delegate.localNightMode = AppCompatDelegate.getDefaultNightMode()
         }
 
         super.onCreate(savedInstanceState)
+
+        if (intent.hasExtra(PecaPlayIntent.EXTRA_NIGHT_MODE)) {
+            val nightMode = intent.getBooleanExtra(PecaPlayIntent.EXTRA_NIGHT_MODE, false)
+            val changed = appPreference.isNightMode != nightMode
+            appPreference.isNightMode = nightMode
+            ThemeUtils.setNightMode(nightMode)
+            if (changed && Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                recreate()//5.1まで再生成必要
+                return
+            }
+        }
 
         requestedOrientation = when (appPreference.isFullScreenMode) {
             true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
 
-        val binding =
-            DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
-        binding.chatViewModel = chatViewModel
-        binding.lifecycleOwner = this
+        ActivityMainBinding.inflate(layoutInflater).also { binding ->
+            setContentView(binding.root)
+            binding.chatViewModel = chatViewModel
+            binding.playerViewModel = playerViewModel
+            binding.appViewModel = appViewModel
+            binding.lifecycleOwner = this
+        }
 
         onViewCreated()
-
-        val streamUrl = intent.data ?: Uri.EMPTY
-
-        //PecaPlay以外からの呼び出し
-        if (streamUrl.scheme in listOf<String?>("http", "mmsh")) {
-            val ts = createTaskStackBuilder(streamUrl, intent.extras)
-            ts.startActivities()
-            return finish()
-        }
-
-
-        appViewModel.serviceLiveData.observe(this, Observer {
-            if (it == null || streamUrl.scheme != "pecaplay")
-                return@Observer
-            //通知バーをタップして復帰できるように
-            val pi = createTaskStackBuilder(streamUrl, intent.extras)
-                .getPendingIntent(0, PendingIntent.FLAG_CANCEL_CURRENT)
-            it.mediaSession.setSessionActivity(pi)
-
-            if (savedInstanceState == null || savedInstanceState.getBoolean(STATE_PLAYING)) {
-                val proto = when (".wmv" in streamUrl.path ?: "") {
-                    true -> "mmsh"
-                    else -> "http"
-                }
-                MediaControllerCompat(this, it.mediaSession).transportControls.playFromUri(
-                    streamUrl.buildUpon().scheme(proto).build(),
-                    intent.extras
-                )
-            }
-        })
-
-        if (BuildConfig.DEBUG){
-            chatViewModel.presenter.loadUrl("http://2chcrew.geo.jp/ze/test/read.cgi/tete/1468154452/")
-        }
-
-        intent.getStringExtra(LibPeerCast.EXTRA_CONTACT_URL)?.let {
-            chatViewModel.presenter.loadUrl(it)
-        }
 
         playerViewModel.isFullScreenMode.let {
             it.value = requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -112,11 +91,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
             })
         }
 
-        if (intent.hasExtra(PecaPlayIntent.EXTRA_NIGHT_MODE))
-            appPreference.isNightMode =
-                intent.getBooleanExtra(PecaPlayIntent.EXTRA_NIGHT_MODE, false)
-
-
         //再生中は自動消灯しない
         playerViewModel.isPlaying.observe(this, Observer {
             when (it) {
@@ -124,10 +98,18 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                 else -> window::clearFlags
             }(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         })
+
+        onServiceConnect = {
+            it.prepareFromUri(intent.data ?: Uri.EMPTY, intent.extras)
+            if (savedInstanceState?.getBoolean(STATE_PLAYING) != false)
+                it.play()
+        }
+
+        IPlayerService.bind(this, this)
     }
 
     private fun onViewCreated() {
-        vPostButton.setOnClickListener {
+        vPostDialogButton.setOnClickListener {
             val f = PostMessageDialogFragment()
             f.show(supportFragmentManager, "tag#PostMessageDialogFragment")
         }
@@ -155,17 +137,17 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         } else {
             initPanelState(appPreference.initPanelState)
         }
-    }
 
-    //from PlayerFragment.vNavigation
-    fun navigationButtonClicked() {
-        vSlidingUpPanel.run {
-            panelState = when {
-                anchorPoint < 1f -> SlidingUpPanelLayout.PanelState.ANCHORED
-                panelState == SlidingUpPanelLayout.PanelState.EXPANDED -> {
-                    SlidingUpPanelLayout.PanelState.COLLAPSED
+        //昇降ボタン
+        vNavigation.setOnClickListener {
+            vSlidingUpPanel.run {
+                panelState = when {
+                    anchorPoint < 1f -> SlidingUpPanelLayout.PanelState.ANCHORED
+                    panelState == SlidingUpPanelLayout.PanelState.EXPANDED -> {
+                        SlidingUpPanelLayout.PanelState.COLLAPSED
+                    }
+                    else -> SlidingUpPanelLayout.PanelState.EXPANDED
                 }
-                else -> SlidingUpPanelLayout.PanelState.EXPANDED
             }
         }
     }
@@ -189,7 +171,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         override fun onPanelSlide(panel: View, __slideOffset: Float) {
             val b = vPlayerFragmentContainer.bottom
             vPlayerFragmentContainer.updatePadding(top = panel.height - b)
-            vChatFragmentContainer.updatePadding(bottom = b - vToolbar.height)
+            vChatFragmentContainer.updatePadding(bottom = b - vPlayerToolbar.height)
         }
 
         override fun onPanelStateChanged(
@@ -239,9 +221,19 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         }
     }
 
+    override fun onServiceConnected(name: ComponentName?, service_: IBinder) {
+        service = (service_ as IPlayerService.Binder).service.also(onServiceConnect)
+    }
+
+    override fun onServiceDisconnected(name: ComponentName?) {
+        service = null
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()
+        if (service != null)
+            IPlayerService.unbind(this, this)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -249,29 +241,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         outState.putBoolean(STATE_PLAYING, playerViewModel.isPlaying.value ?: true)
     }
 
-    /**
-     * http://の暗黙インテントをpecaplay://に変換し、
-     * pecaplay -> プレーヤーのスタックを作る。
-     * */
-    private fun createTaskStackBuilder(steamUri: Uri, extras: Bundle?): TaskStackBuilder {
-        val iPecaPlay = packageManager.getLaunchIntentForPackage("org.peercast.pecaplay")
-        val iViewer = Intent(
-            Intent.ACTION_VIEW,
-            steamUri.buildUpon().scheme("pecaplay").build(),
-            this, javaClass
-        )
-        iViewer.putExtras(extras ?: Bundle.EMPTY)
-
-        return TaskStackBuilder.create(this).also {
-            if (iPecaPlay != null)
-                it.addNextIntent(iPecaPlay)
-            it.addNextIntent(iViewer)
-        }
-    }
-
     companion object {
         private const val STATE_PLAYING = "STATE_PLAYING"
-
-
     }
 }

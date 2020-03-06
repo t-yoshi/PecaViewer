@@ -13,7 +13,7 @@ private class ZeroChannelBoardInfo(
     val baseUrl: String, //ex. http://hibino.ddo.jp/bbs/
     val board: String,   //    peca
     m: Map<String, String>
-) : BaseBbsBoardInfo(m) {
+) : BaseBbsBoardInfo() {
     override val url: String = "$baseUrl$board/" // http://hibino.ddo.jp/bbs/peca/
     override val title: String = m["BBS_TITLE"] ?: "??"
     val numResMax = m["BBS_RES_MAX"]?.toIntOrNull() ?: 1000
@@ -86,12 +86,14 @@ private class ZeroChannelBoardThreadConnection(
             // If-Modified-Sinceを有効にする
             .header("Cache-Control", "private, must-revalidate, max-age=5")
             .build()
-        var n = 1
-        return base.client.parseText(req, "<>", 5) { a ->
+        var n = 0
+        val result = base.client.parseText(req, "<>", 5) { a ->
             val date = a[2].substringBefore(" ID:")
             val id = a[2].substringAfter(" ID:")
-            BbsMessage(info, n++, a[0], a[1], date, a[3], id)
+            BbsMessage(info, ++n, a[0], a[1], date, a[3], id)
         }
+        info.numMessages = n
+        return result
     }
 
     override suspend fun postMessage(m: PostMessage): String {
@@ -116,9 +118,7 @@ private class ZeroChannelBoardThreadConnection(
             .header("Cache-Control", "no-store")
             .build()
 
-        return BbsUtils.stripHtml(
-            base.client.post(req)
-        ).trim().replace("""[\s　]+""".toRegex(), " ")
+        return base.client.post(req)
     }
 
     companion object {

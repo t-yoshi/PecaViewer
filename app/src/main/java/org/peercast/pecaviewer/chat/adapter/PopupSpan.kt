@@ -12,7 +12,7 @@ import org.peercast.pecaviewer.R
 
 /**
 アンカーをクリックしてポップアップ
-*/
+ */
 class PopupSpan private constructor(private val resNumber: Int) : ClickableSpan() {
     override fun onClick(widget: View) {
         //Timber.d("--> #$resNumber $widget")

@@ -1,107 +1,123 @@
 package org.peercast.pecaviewer.chat.adapter
 
+import android.os.Bundle
 import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
+import org.peercast.pecaviewer.BR
 import org.peercast.pecaviewer.R
+import org.peercast.pecaviewer.chat.net2.IBrowsable
 import org.peercast.pecaviewer.chat.net2.IMessage
 import org.peercast.pecaviewer.chat.net2.PostMessage
-import org.peercast.pecaviewer.databinding.BbsMessageItemSimple2Binding
+import org.peercast.pecaviewer.databinding.BbsMessageItemBasicBinding
+import org.peercast.pecaviewer.databinding.BbsMessageItemSeparatorBinding
+import org.peercast.pecaviewer.databinding.BbsMessageItemSimpleBinding
 import timber.log.Timber
+import kotlin.properties.Delegates
 
 
-class MessageAdapter : RecyclerView.Adapter<MessageAdapter.BaseViewHolder>(),
+class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
     PopupSpan.SupportAdapter {
 
-    private val items = ArrayList<IMessage>()
+    private var itemsOrigin = emptyList<IMessage>()
+    private var itemsHolder = object : ItemsHolder<IMessage>(){
+        override fun areContentsTheSame(oldItem: IMessage, newItem: IMessage): Boolean {
+            //"n分前"の表示は更新したい
+            if (defaultViewType == SIMPLE)
+                return false
+            return super.areContentsTheSame(oldItem, newItem)
+        }
 
-    //前回の最後尾
-    private var prevLastItem: IMessage? = null
+        override fun getChangePayload(oldItem: IMessage, newItem: IMessage): Any? {
+            if (defaultViewType == SIMPLE)
+                return 1
+            return null
+        }
+    }
+
+    //前回最後尾のurl
+    private var prevLastItem: String? = null
 
     fun setItems(newItems: List<IMessage>) {
-        if (items != newItems || prevLastItem == null)
-            prevLastItem = items.lastOrNull { it !== ITEM_SPACER }
-        items.clear()
-        items.addAll(newItems)
+        if (prevLastItem == null || itemsOrigin != newItems)
+            prevLastItem = (itemsOrigin.lastOrNull() as? IBrowsable)?.url
 
+        itemsOrigin = newItems
+
+        val items = newItems.toMutableList()
         //前回の最後尾にスペーサーを入れる
-        when (val i = items.indexOfLast { it == prevLastItem }) {
+        when (val i = items.indexOfLast { (it as? IBrowsable)?.url == prevLastItem }) {
             -1 -> items.add(ITEM_SPACER)
             else -> items.add(i + 1, ITEM_SPACER)
         }
-
-        notifyDataSetChanged()
+        itemsHolder.update(items, this)
     }
 
     /**簡易表示、または詳細表示。*/
-    var defaultViewType = SIMPLE
-        set(value) {
-            if (value !in arrayOf(SIMPLE, BASIC))
-                throw IllegalArgumentException("not support viewType: $value")
-            val changed = field != value
-            field = value
-            if (changed)
-                notifyDataSetChanged()
-        }
+    var defaultViewType by Delegates.observable(SIMPLE) { _, oldVal, newVal ->
+        if (newVal !in arrayOf(SIMPLE, BASIC))
+            throw IllegalArgumentException("not support viewType: $newVal")
+        if (newVal != oldVal)
+            notifyDataSetChanged()
+    }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int):  ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        return VIEW_HOLDER_FACTORIES[viewType](inflater, parent)
+        return ViewHolder(
+            DATA_BINDING_INFLATES[viewType](inflater, parent, false)
+        )
     }
 
-
-    private abstract class ViewHolderFactory {
-        abstract operator fun invoke(inflater: LayoutInflater, parent: ViewGroup): BaseViewHolder
-    }
-
-    open class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        protected val viewModel = ListItemViewModel()
+    class ViewHolder(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
+        val viewModel = MessageViewModel()
 
         init {
+            if (!binding.setVariable(BR.viewModel, viewModel))
+                throw RuntimeException("Nothing defined viewModel in layout.")
             itemView.findViewById<TextView?>(R.id.vBody)?.movementMethod =
                 LinkMovementMethod.getInstance()
-        }
-
-        open fun bind(msg: IMessage) {
-            viewModel.setMessage(msg)
-            viewModel.notifyChange()
-        }
-    }
-
-    private class SimpleViewHolder(binding: BbsMessageItemSimple2Binding) :
-        BaseViewHolder(binding.root) {
-        init {
-            binding.viewModel = viewModel
         }
     }
 
     override fun createViewForPopupWindow(resNumber: Int, parent: ViewGroup): View? {
-        val m = items.lastOrNull { it.number == resNumber }
-        return if (m != null) {
-            val inflater = LayoutInflater.from(parent.context)
-            val vh = VIEW_HOLDER_FACTORIES[defaultViewType](inflater, parent)
-            vh.bind(m)
-            vh.itemView
-        } else {
+        val m = itemsOrigin.lastOrNull { it.number == resNumber }
+        if (m == null) {
             Timber.w("#$resNumber is not found")
-            null
+            return null
         }
+
+        val inflater = LayoutInflater.from(parent.context)
+        val vh = ViewHolder(
+            DATA_BINDING_INFLATES[defaultViewType](inflater, parent, false)
+        )
+        vh.viewModel.setMessage(m)
+        return vh.itemView
     }
 
-    override fun getItemCount(): Int = items.size
+    override fun getItemCount(): Int = itemsHolder.size
 
     override fun getItemViewType(position: Int): Int {
-        val item = items[position]
+        val item = itemsHolder[position]
         if (item === ITEM_SPACER)
             return SEPARATOR
         return defaultViewType
     }
 
-    override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
-        holder.bind(items[position])
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.viewModel.setMessage(itemsHolder[position], defaultViewType == SIMPLE)
+        holder.binding.executePendingBindings()
+    }
+
+    fun saveInstanceState(outState: Bundle){
+        outState.putString(STATE_LAST_ITEM_URL, prevLastItem)
+    }
+
+    fun restoreInstanceState(inState: Bundle){
+        prevLastItem = inState.getString(STATE_LAST_ITEM_URL)
     }
 
     companion object {
@@ -115,27 +131,16 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.BaseViewHolder>(),
 
         private const val SEPARATOR = 2
 
-        private val VIEW_HOLDER_FACTORIES = arrayOf(
-            object : ViewHolderFactory() { //0: SIMPLE
-                override fun invoke(inflater: LayoutInflater, parent: ViewGroup): BaseViewHolder {
-                    val binding = BbsMessageItemSimple2Binding.inflate(inflater, parent, false)
-                    return SimpleViewHolder(binding)
-                }
-            },
-            object : ViewHolderFactory() { //1: BASIC
-                override fun invoke(inflater: LayoutInflater, parent: ViewGroup): BaseViewHolder {
-                    TODO("掲示板のような表示")
-                }
-            },
-            object : ViewHolderFactory() { //2: SEPARATOR
-                override fun invoke(inflater: LayoutInflater, parent: ViewGroup): BaseViewHolder {
-                    val v = inflater.inflate(R.layout.bbs_message_item_separator, parent, false)
-                    return BaseViewHolder(v)
-                }
-            }
-
+        private val DATA_BINDING_INFLATES = listOf<ViewDataBinding_inflate>(
+            BbsMessageItemSimpleBinding::inflate,
+            BbsMessageItemBasicBinding::inflate,
+            BbsMessageItemSeparatorBinding::inflate
         )
+
+        private const val STATE_LAST_ITEM_URL = "org.peercast.pecaviewer.chat.adapter.MessageAdapter#LAST_ITEM_URL"
     }
 }
+
+private typealias ViewDataBinding_inflate  = (LayoutInflater, ViewGroup, Boolean)->ViewDataBinding
 
 

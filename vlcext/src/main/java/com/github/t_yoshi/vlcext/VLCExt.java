@@ -11,7 +11,10 @@ public class VLCExt {
 
     private static native void initClasses();
 
-    /**libvlc_video_take_snapshotを呼び出し、pngでスクリーンショットを撮る。*/
+    /**libvlc_video_take_snapshotを呼び出し、pngでスクリーンショットを撮る。
+     * @deprecated ハードウェアアクセラレーション下で動作しない
+     * */
+    @Deprecated
     public static native boolean videoTakeSnapshot(MediaPlayer player, String filepath, int width, int height);
 
     static  {

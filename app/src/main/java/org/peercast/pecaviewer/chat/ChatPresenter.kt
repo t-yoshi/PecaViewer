@@ -1,146 +1,233 @@
 package org.peercast.pecaviewer.chat
 
-import androidx.annotation.MainThread
+import android.content.Context
+import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.koin.core.KoinComponent
-import org.koin.core.inject
-import org.peercast.pecaviewer.AppPreference
-import org.peercast.pecaviewer.chat.net2.IBoardConnection
-import org.peercast.pecaviewer.chat.net2.IBoardThreadConnection
-import org.peercast.pecaviewer.chat.net2.IThreadInfo
-import org.peercast.pecaviewer.chat.net2.openBoardConnection
+import org.peercast.pecaviewer.R
+import org.peercast.pecaviewer.chat.net2.*
 import org.peercast.pecaviewer.util.localizedSystemMessage
 import timber.log.Timber
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
-class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent, CoroutineScope {
-    private val appPrefs by inject<AppPreference>()
+class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
+    private val prefs = BbsThreadPreference(chatViewModel.getApplication())
     private var boardConn: IBoardConnection? = null
         set(value) {
             field = value
-            chatViewModel.chatToolbarTitle.value = value?.info?.title
+            chatViewModel.chatToolbarTitle.postValue(value?.info?.title)
         }
-
-    override val coroutineContext = chatViewModel.viewModelScope.coroutineContext
-    private var loadingJob: Job? = null
 
     //コンタクトURL。配信者が更新しないかぎり変わらない。
     private var contactUrl = ""
 
-    /**スレッドのリストを含め、全体を再読込する。*/
-    fun reload() {
+    /**スレッドのリストとメッセージを再読込する*/
+    suspend fun reload() {
         loadUrl(contactUrl, true)
     }
 
-    fun reloadThread() {
-        launch {
-            chatViewModel.isMessageListRefreshing.value = true
-            try {
-                val conn = boardConn
-                if (conn is IBoardThreadConnection) {
-                    chatViewModel.selectedThreadPoster.value =
-                        if (conn.info.isPostable) conn else null
-
-                    val messages = conn.loadMessages()
-                    if (messages != chatViewModel.messageLiveData.value) {
-                        chatViewModel.messageLiveData.value = messages
-                        postNetworkErrorMessage("")
-                    } else {
-                        //postNetworkErrorMessage("have not changed.")
-                    }
+    /**
+     * スレッドのメッセージを再読込する。
+     * */
+    suspend fun reloadThread() {
+        chatViewModel.isMessageListRefreshing.postValue(true)
+        clearSnackMessage()
+        try {
+            val conn = boardConn
+            if (conn is IBoardThreadConnection) {
+                chatViewModel.selectedThreadPoster.postValue(
+                    if (conn.info.isPostable) conn else null
+                )
+                val messages = conn.loadMessages()
+                if (true || messages != chatViewModel.messageLiveData.value) {
+                    chatViewModel.messageLiveData.postValue(messages)
                 } else {
-                    postNetworkErrorMessage("thread is not selected.")
+                    //postSnackMessage("have not changed.")
                 }
-            } catch (e: IOException) {
-                postNetworkErrorMessage(e.localizedSystemMessage())
-            } finally {
-                chatViewModel.isMessageListRefreshing.value = false
             }
+        } catch (e: IOException) {
+            postSnackErrorMessage(e)
+        } finally {
+            chatViewModel.isMessageListRefreshing.postValue(false)
         }
     }
 
-
-    /**コンタクトURLを読込む。*/
-    fun loadUrl(url: String, isForce: Boolean = false) {
-        //接続中のリロードは無視
-        if (url.isEmpty() || loadingJob?.isActive == true)
-            return
+    /**
+     * コンタクトURLを読込む。
+     * */
+    suspend fun loadUrl(url: String, isForce: Boolean = false) {
         if (!url.matches("""^https?://.+""".toRegex())) {
             Timber.w("invalid url: $url")
             return
         }
-
         if (url != contactUrl || isForce) {
             contactUrl = url
-            //以前にスレッドを選択していたのなら
-            val alternateUrl = appPrefs.userSelectedContactUrlMap[url]
-            if (alternateUrl != url) {
-                Timber.i("alternate contact url: $alternateUrl")
-            }
-            loadingJob = launch {
-                doLoadUrl(alternateUrl)
-            }
+            doLoadUrl(url)
         }
     }
 
-    @MainThread
     private suspend fun doLoadUrl(url: String) {
         Timber.d("doLoadUrl: $url")
 
         try {
-            chatViewModel.isThreadListRefreshing.value = true
+            chatViewModel.isThreadListRefreshing.postValue(true)
+            clearSnackMessage()
+
             val conn = openBoardConnection(url)
             boardConn = conn
 
             chatViewModel.threadLiveData.postValue(conn.loadThreads())
 
-            if (conn is IBoardThreadConnection) {
-                threadSelect(conn.info)
-            } else {
-                threadSelect(null)
+            //スレッド選択の復元
+            val threadSelectFilter = prefs.restoreSelectedThread(conn.info)
+            val selectedThread = when {
+                threadSelectFilter != null -> {
+                    conn.loadThreads().firstOrNull(threadSelectFilter)
+                }
+                conn is IBoardThreadConnection -> {
+                    conn.info
+                }
+                else -> {
+//                  postSnackMessage("thread is not selected.")
+                    null
+                }
             }
-            postNetworkErrorMessage("")
+            threadSelect(selectedThread)
         } catch (e: IOException) {
             threadSelect(null)
-            postNetworkErrorMessage(e.localizedSystemMessage())
+            postSnackErrorMessage(e)
         } finally {
-            chatViewModel.isThreadListRefreshing.value = false
+            chatViewModel.isThreadListRefreshing.postValue(false)
         }
     }
 
-    fun threadSelect(info: IThreadInfo?) {
+    suspend fun threadSelect(info: IThreadInfo?) {
         chatViewModel.selectedThread.postValue(info)
 
         if (info == null) {
             //boardConn = null
-            chatViewModel.selectedThreadPoster.value = null
+            chatViewModel.selectedThreadPoster.postValue(null)
             Timber.w("Thread not selected: $contactUrl")
             return
         }
 
-        launch {
-            try {
-                val threadConn = boardConn?.openThreadConnection(info) ?: return@launch
+        try {
+            val threadConn = boardConn?.openThreadConnection(info) ?: return
 
-                //スレッドの選択を保存する
-                appPrefs.userSelectedContactUrlMap[contactUrl] = info.url
+            //スレッドの選択を保存する
+            prefs.storeSelectedThread(info)
 
-                boardConn = threadConn
-                reloadThread()
+            boardConn = threadConn
+            reloadThread()
 
-            } catch (e: IOException) {
-                postNetworkErrorMessage(e.localizedSystemMessage())
+        } catch (e: IOException) {
+            postSnackErrorMessage(e)
+        }
+    }
+
+    /**掲示板に書き込む*/
+    fun postMessage(poster: IBoardThreadPoster, msg: PostMessage) {
+        chatViewModel.viewModelScope.launch {
+            val d = async {
+                val r = kotlin.runCatching { poster.postMessage(msg) }
+                postSnackMessage(r)
+                r.isSuccess
+            }
+            postSnackMessage("Sending...", d)
+
+            if (!d.isCancelled && d.await()) {
+                //送信成功したのでスレッドを再読み込み
+                try {
+                    reload()
+                    clearSnackMessage()
+                } catch (e: IOException) {
+                    postSnackErrorMessage(e)
+                }
             }
         }
     }
 
-    private fun postNetworkErrorMessage(s: String) {
-        chatViewModel.networkMessage.postValue(s)
+    /**スナックバー表示をクリアする*/
+    fun clearSnackMessage() {
+        chatViewModel.snackbarMessage.postValue(null)
     }
 
+    /**スナックバーに表示する*/
+    fun postSnackMessage(
+        text: CharSequence,
+        cancelJob: Job? = null,
+        cancelText: CharSequence? = null
+    ) {
+        val m = SnackbarMessage(text, cancelJob = cancelJob, cancelText = cancelText)
+        chatViewModel.snackbarMessage.postValue(m)
+    }
 
+    /**スナックバーに成功またはエラーを表示する*/
+    fun postSnackMessage(result: Result<CharSequence>) {
+        result.onSuccess {
+            postSnackMessage(it)
+        }.onFailure {
+            Timber.d(it)
+            if (it !is IOException)
+                throw it
+            postSnackErrorMessage(it)
+        }
+    }
 
+    /**スナックバーにエラーを表示する*/
+    fun postSnackErrorMessage(e: IOException) {
+        val m = SnackbarMessage(e.localizedSystemMessage(), R.color.red_800)
+        chatViewModel.snackbarMessage.postValue(m)
+    }
+
+}
+
+//スレッドの選択を保存する
+private class BbsThreadPreference(c: Context) {
+    private val pref = c.getSharedPreferences(
+        "chat.thread",
+        Context.MODE_PRIVATE
+    )
+
+    init {
+        //古いものを削除
+        val now = System.currentTimeMillis()
+        val expired = pref.all.filter { (_, v) ->
+            val m = RE_EXPIRE.find(v.toString()) ?: return@filter true
+            m.groupValues[1].toLong() < now
+        }
+        pref.edit {
+            expired.forEach { remove(it.key) }
+        }
+    }
+
+    fun storeSelectedThread(thread: IThreadInfo) {
+        if (thread !is BaseBbsThreadInfo) {
+            Timber.w("$thread is not stored.")
+            return
+        }
+
+        val expire = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30)
+        pref.edit {
+            val u = "${thread.url}#!expire=$expire"
+//            Timber.d("${thread.board.url} -> $u")
+            putString(thread.board.url, u)
+        }
+    }
+
+    fun restoreSelectedThread(boardInfo: IBoardInfo): ((IThreadInfo) -> Boolean)? {
+        val boardUrl = boardInfo.boardTopUrl
+        return pref.getString(boardUrl, null)
+            ?.replace(RE_EXPIRE, "")
+//            ?.also { Timber.d("$boardUrl <- $it") }
+            ?.let { u -> { it.url == u } }
+    }
+
+    companion object {
+        private val RE_EXPIRE = """#!expire=(\d+)$""".toRegex()
+    }
 }

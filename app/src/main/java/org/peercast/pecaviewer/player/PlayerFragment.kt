@@ -1,97 +1,57 @@
 package org.peercast.pecaviewer.player
 
+import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Intent
+import android.content.ServiceConnection
+import android.os.Build
 import android.os.Bundle
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaControllerCompat
+import android.os.IBinder
 import android.view.*
-import androidx.core.content.FileProvider
+import androidx.annotation.RequiresApi
 import androidx.core.view.children
-import androidx.core.view.doOnLayout
-import androidx.core.view.isInvisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
-import com.github.t_yoshi.vlcext.VLCLogMessage
 import kotlinx.android.synthetic.main.fragment_player.*
-import kotlinx.android.synthetic.main.player_toolbar.*
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.AppPreference
 import org.peercast.pecaviewer.AppViewModel
-import org.peercast.pecaviewer.MainActivity
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.databinding.FragmentPlayerBinding
-import org.peercast.pecaviewer.service.IPecaViewerService
+import org.peercast.pecaviewer.service2.IPlayerService
 import org.videolan.libvlc.MediaPlayer
 import timber.log.Timber
-import java.io.File
 
 
-class PlayerFragment : Fragment() {
+class PlayerFragment : Fragment(), ServiceConnection {
 
     private val appViewModel by sharedViewModel<AppViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val appPreference by inject<AppPreference>()
 
-    private var mediaController: MediaControllerCompat? = null
-    private var service: IPecaViewerService? = null
+    private var service: IPlayerService? = null
 
     //画面回転時orスクリーンショット処理時には一時的にバックグラウンド再生を許可する
     private var isTemporaryBackgroundPlaying = false
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        appViewModel.serviceLiveData.observe(this, Observer { srv ->
-            if (srv != null) {
-                service = srv
-                mediaController = MediaControllerCompat(context, srv.mediaSession).apply {
-                    registerCallback(playerViewModel.mediaControllerHandler)
-                }
-                if (isResumed)
-                    srv.attachViews(vVLCVideoLayout)
-
-                srv.vlcLogMessage.observe(this, Observer {
-                    if (it.level == VLCLogMessage.ERROR &&
-                        it.ctx.object_type !in listOf("window")
-                    ) {
-                        playerViewModel.channelWarning.value = it.msg
-                        Timber.w("-> $it")
-                    }
-                })
-
-            } else {
-                mediaController?.unregisterCallback(playerViewModel.mediaControllerHandler)
-                mediaController = null
-                service?.detachViews()
-                service = null
-            }
-        })
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return FragmentPlayerBinding.inflate(inflater, container, false).let {
+        return FragmentPlayerBinding.inflate(inflater, container, false).also {
             it.lifecycleOwner = viewLifecycleOwner
-            it.appViewModel = appViewModel
-            it.playerViewModel = playerViewModel
-            it.root
-        }
+            it.viewModel = playerViewModel
+        }.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         vPlayerMenu.also {
             MenuInflater(it.context).inflate(R.menu.menu_player, it.menu)
             onPrepareOptionsMenu(it.menu)
             it.setOnMenuItemClickListener(::onOptionsItemSelected)
-        }
-
-        vNavigation.setOnClickListener {
-            (activity as? MainActivity)?.navigationButtonClicked()
         }
 
         view.setOnClickListener {
@@ -99,7 +59,7 @@ class PlayerFragment : Fragment() {
         }
 
         vPlay.setOnClickListener {
-            mediaController?.transportControls?.run {
+            service?.run {
                 if (playerViewModel.isPlaying.value == true)
                     stop()
                 else
@@ -114,12 +74,6 @@ class PlayerFragment : Fragment() {
                 it.value = it.value != true
             }
         }
-
-        vVLCVideoLayout.doOnLayout {
-            it.post {
-                service?.updateVideoSurfaces()
-            }
-        }
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
@@ -129,8 +83,10 @@ class PlayerFragment : Fragment() {
             mi.isCheckable = i == scale.ordinal
         }
         menu.findItem(R.id.menu_background).isChecked = appPreference.isBackgroundPlaying
-        //menu.findItem(R.id.menu_screenshot).isEnabled = mediaController?.playbackState?.state == PlaybackStateCompat.STATE_PLAYING
+        menu.findItem(R.id.menu_screenshot).isEnabled =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
     }
+
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
@@ -152,7 +108,8 @@ class PlayerFragment : Fragment() {
             }
 
             R.id.menu_screenshot -> {
-                invokeScreenShot()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                    onScreenShot()
             }
         }
 
@@ -160,48 +117,56 @@ class PlayerFragment : Fragment() {
         return true
     }
 
-
-    private fun invokeScreenShot() {
-        val c = context!!
-        val title =
-            mediaController?.metadata?.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE)
-                ?: "Screenshot"
-        val f = File(c.filesDir, "$title.png")
-        if (service?.screenShot(f.absolutePath) != true)
-            return
-        val u = FileProvider.getUriForFile(c, "org.peercast.pecaviewer.fileprovider", f)
-        Timber.i("Screenshot success: $u: ${f.length()}")
-
-        val i = Intent(Intent.ACTION_SEND).apply {
-            type = "image/png"
-            addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
-            putExtra(Intent.EXTRA_STREAM, u)
-            putExtra(Intent.EXTRA_TEXT, "$title  #PeerCast")
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun onScreenShot() {
+        playerViewModel.presenter.takeScreenShotAndCreateIntent(
+            vVLCVideoLayout, 1280
+        ) {
+            isTemporaryBackgroundPlaying = true
+            try {
+                startActivity(Intent.createChooser(it, "Choose an app"))
+            } catch (e: ActivityNotFoundException) {
+                Timber.e(e)
+            }
         }
-        isTemporaryBackgroundPlaying = true
-        startActivity(Intent.createChooser(i, "Choose an app"))
-    }
-
-    override fun onPause() {
-        super.onPause()
-        vVLCVideoLayout.isInvisible = true
-        service?.detachViews()
-
-        if (!appPreference.isBackgroundPlaying && !isTemporaryBackgroundPlaying) {
-            mediaController?.transportControls?.stop()
-        }
-        isTemporaryBackgroundPlaying = false
     }
 
     override fun onResume() {
         super.onResume()
-        service?.attachViews(vVLCVideoLayout)
-        vVLCVideoLayout.isInvisible = false
+        context?.let { IPlayerService.bind(it, this) }
     }
 
+    override fun onPause() {
+        super.onPause()
+
+        if (!appPreference.isBackgroundPlaying && !isTemporaryBackgroundPlaying) {
+            service?.stop()
+        }
+        isTemporaryBackgroundPlaying = false
+
+        service?.let { s ->
+            if (appPreference.isBackgroundPlaying && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                playerViewModel.presenter.takeScreenShot(vVLCVideoLayout, 256) {
+                    s.thumbnail = it
+                }
+            }
+            s.detachViews()
+        }
+
+        context?.let { c->
+            IPlayerService.unbind(c, this)
+        }
+        service = null
+    }
+
+    override fun onServiceConnected(name: ComponentName, service_: IBinder) {
+        service = (service_ as IPlayerService.Binder).service.also {s->
+           s.attachViews(vVLCVideoLayout)
+        }
+    }
+
+    override fun onServiceDisconnected(name: ComponentName?) {
+        service = null
+    }
 
 }

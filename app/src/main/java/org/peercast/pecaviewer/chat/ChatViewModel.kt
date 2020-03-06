@@ -1,15 +1,11 @@
 package org.peercast.pecaviewer.chat
 
 import android.app.Application
-import android.os.Handler
-import android.os.Looper
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import org.peercast.pecaviewer.chat.net2.IBoardThreadPoster
 import org.peercast.pecaviewer.chat.net2.IMessage
 import org.peercast.pecaviewer.chat.net2.IThreadInfo
-import timber.log.Timber
 
 
 class ChatViewModel(a: Application) : AndroidViewModel(a) {
@@ -19,18 +15,11 @@ class ChatViewModel(a: Application) : AndroidViewModel(a) {
     val isToolbarVisible = MutableLiveData<Boolean>(true)
     val isThreadListVisible = MutableLiveData<Boolean>(false)
 
-    private val handler = Handler(Looper.getMainLooper())
-
-    private val invisibleToolbarRunnable = Runnable {
-        isToolbarVisible.value = false
-    }
-
-
     val chatToolbarTitle = MutableLiveData<CharSequence>("")
     val chatToolbarSubTitle = MutableLiveData<CharSequence>("")
 
-    val isThreadListRefreshing = MutableLiveData<Boolean>(false)
-    val isMessageListRefreshing = MutableLiveData<Boolean>(false)
+    val isThreadListRefreshing = MutableLiveData(false)
+    val isMessageListRefreshing = MutableLiveData(false)
 
     val messageLiveData = MutableLiveData<List<IMessage>>()
     val threadLiveData = MutableLiveData<List<IThreadInfo>>()
@@ -44,24 +33,17 @@ class ChatViewModel(a: Application) : AndroidViewModel(a) {
     /**下書き (URL/内容)*/
     val messageDraft = HashMap<String, String>()
 
-    /**接続エラー等*/
-    val networkMessage = MutableLiveData<String>()
+    /**スナックバーに表示する*/
+    val snackbarMessage = MutableLiveData<SnackbarMessage>()
 
     init {
-        isToolbarVisible.observeForever {
-            if (it) {
-                handler.removeCallbacks(invisibleToolbarRunnable)
-                handler.postDelayed(invisibleToolbarRunnable, 8000)
-            }
-        }
-
-        networkMessage.observeForever {
-            if (it.isNotBlank()) {
-                Timber.d(it)
-                Toast.makeText(a, it, Toast.LENGTH_LONG).show()
-            }
-        }
+//        isToolbarVisible.observeForever {
+//            if (it) {
+//
+////                handler.removeCallbacks(invisibleToolbarRunnable)
+////                handler.postDelayed(invisibleToolbarRunnable, 8000)
+//            }
+//        }
     }
 }
-
 

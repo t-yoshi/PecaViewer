@@ -18,7 +18,7 @@
     </data>
 
     <RelativeLayout
-            android:id="@+id/vToolbar"
+            android:id="@+id/vPlayerToolbar"
             android:layout_width="match_parent"
             android:layout_height="?android:attr/actionBarSize"
             android:background="#212121"

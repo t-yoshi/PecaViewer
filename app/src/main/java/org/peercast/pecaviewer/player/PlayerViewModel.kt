@@ -1,92 +1,141 @@
 package org.peercast.pecaviewer.player
 
 import android.app.Application
-import android.media.session.PlaybackState
-import android.os.Handler
-import android.os.Looper
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaControllerCompat
-import android.support.v4.media.session.PlaybackStateCompat
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import org.peercast.pecaviewer.service.PecaViewerService
-import timber.log.Timber
+import androidx.lifecycle.*
+import com.github.t_yoshi.vlcext.VLCLogMessage
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.koin.core.KoinComponent
+import org.koin.core.inject
+import org.peercast.pecaviewer.service2.MediaPlayerEvent
+import org.peercast.pecaviewer.service2.PeerCastChannelEvent
+import org.peercast.pecaviewer.service2.PlayerServiceEventLiveData
+import org.peercast.pecaviewer.service2.VLCLogEvent
+import org.videolan.libvlc.MediaPlayer
 
 
-class PlayerViewModel(a: Application) : AndroidViewModel(a) {
-    private val handler = Handler(Looper.getMainLooper())
+class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
+    val presenter = PlayerPresenter(this)
+
+    //サービスからのイベントを元に表示する
+    private val eventLiveData by inject<PlayerServiceEventLiveData>()
 
     /**再生中か*/
-    val isPlaying = MutableLiveData<Boolean>()
-
-    /**コントロールボタンの表示。タッチして数秒後に消える*/
-    val isControlsViewVisible = MutableLiveData<Boolean>(false).apply {
-        val r = Runnable { value = false }
-        observeForever {
-            if (it) {
-                handler.removeCallbacks(r)
-                handler.postDelayed(r, 8000)
+    val isPlaying: LiveData<Boolean> = MediatorLiveData<Boolean>().also { ld ->
+        ld.addSource(eventLiveData) { ev ->
+            when (ev) {
+                is MediaPlayerEvent -> {
+                    ld.value = ev.isPlaying
+                }
             }
         }
     }
 
-    val isFullScreenMode = MutableLiveData<Boolean>(false)
+    /**コントロールボタンの表示。タッチして数秒後に消える*/
+    val isControlsViewVisible = MutableLiveData<Boolean>(false).also { ld ->
+        var j: Job? = null
+        ld.observeForever {
+            if (it) {
+                j?.cancel()
+                j = viewModelScope.launch {
+                    delay(8_000)
+                    ld.value = false
+                }
+            }
+        }
+    }
+
+    val isFullScreenMode = MutableLiveData(false)
 
     //　ツールバーの表示用
 
     /**チャンネル名*/
-    val channelTitle = MutableLiveData<CharSequence>("")
+    val channelTitle: MutableLiveData<CharSequence> = MediatorLiveData<CharSequence>().also { ld ->
+        ld.addSource(eventLiveData) { ev ->
+            when (ev) {
+                is PeerCastChannelEvent -> {
+                    ld.value = ev.name
+                }
+            }
+        }
+    }
 
     /**チャンネル詳細、コメントなど*/
-    val channelDescription = MutableLiveData<CharSequence>("")
+    val channelDescription: MutableLiveData<CharSequence> = MediatorLiveData<CharSequence>().also { ld ->
+        ld.addSource(eventLiveData) { ev ->
+            when (ev) {
+                is PeerCastChannelEvent -> {
+                    ld.value = "${ev.desc} ${ev.comment}"
+                }
+            }
+        }
+    }
 
     /**ステータス。配信時間など*/
-    val channelStatus = MutableLiveData<CharSequence>("")
+    val channelStatus: LiveData<CharSequence> = MediatorLiveData<CharSequence>().also { ld ->
+        ld.addSource(eventLiveData) { ev ->
+            if (ev is MediaPlayerEvent) {
+                when (ev.ev.type) {
+                    MediaPlayer.Event.TimeChanged -> {
+                        val t = ev.ev.timeChanged / 1000
+                        ld.value =
+                            "%d:%02d:%02d".format(t / 60 / 60, t / 60 % 60, t % 60)
+                    }
+                }
+            }
+        }
+    }
 
     /**警告メッセージ。エラー、バッファ発生など*/
-    val channelWarning = MutableLiveData<CharSequence>("").apply {
+    val channelWarning: LiveData<CharSequence> = MediatorLiveData<CharSequence>().also { ld ->
         //赤文字の警告は数秒後に消え、緑のステータス表示に戻る
-        val r = Runnable { value = "" }
-        observeForever {
+        var j: Job? = null
+        ld.observeForever {
             if (it.isNotEmpty()) {
-                handler.removeCallbacks(r)
-                handler.postDelayed(r, 5000)
+                j?.cancel()
+                j = viewModelScope.launch {
+                    delay(5_000)
+                    ld.value = ""
+                }
+            }
+        }
+
+        ld.addSource(eventLiveData) { ev ->
+            when (ev) {
+                is VLCLogEvent -> ev.log.let { log ->
+                    if (log.level == VLCLogMessage.ERROR &&
+                        log.ctx.object_type !in listOf("window")
+                    ) {
+                        ld.value = log.msg
+                        //Timber.w("-> $log")
+                    }
+                }
+                is MediaPlayerEvent -> {
+                    when (ev.ev.type) {
+                        MediaPlayer.Event.Buffering -> {
+                            ld.value = "Buffering.. %.1f%%".format(ev.ev.buffering)
+                        }
+                    }
+                }
             }
         }
     }
 
     /**コンタクトURL*/
-    val channelContactUrl = MutableLiveData<String>()
-
-    val mediaControllerHandler = object : MediaControllerCompat.Callback() {
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat) {
-            when (state.state) {
-                PlaybackState.STATE_PLAYING -> {
-                    val t = state.position / 1000
-                    channelStatus.value = "%d:%02d:%02d".format(t / 60 / 60, t / 60 % 60, t % 60)
-                    isPlaying.value = true
+    val channelContactUrl: MutableLiveData<String> = MediatorLiveData<String>().also { ld ->
+        ld.addSource(eventLiveData) { ev ->
+            when (ev) {
+                is PeerCastChannelEvent -> {
+                    ld.value = ev.url
                 }
-                PlaybackState.STATE_BUFFERING -> {
-                    val buffering = 100f * state.bufferedPosition / state.lastPositionUpdateTime
-                    //Timber.d("Buffering.... $buffering")
-                    channelWarning.value = "Buffering.. %.1f%%".format(buffering)
-                }
-                PlaybackState.STATE_STOPPED,
-                PlaybackState.STATE_PAUSED -> {
-                    isPlaying.value = false
-                }
-
             }
-        }
-
-        override fun onMetadataChanged(metadata: MediaMetadataCompat) {
-            Timber.d("onMetadataChanged: $metadata")
-            channelTitle.value = metadata.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE)
-            channelDescription.value = metadata.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE) +
-                    metadata.getString(MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION)
-            channelContactUrl.value = metadata.getString(PecaViewerService.METADATA_KEY_CONTACT_URL) ?: ""
         }
     }
 
-
+//    init {
+//        eventLiveData.observeForever {
+//            Timber.d("$it")
+//        }
+//    }
 }

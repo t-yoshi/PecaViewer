@@ -1,102 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
 
         <variable
                 name="viewModel"
-                type="org.peercast.pecaviewer.chat.adapter.ListItemViewModel" />
+                type="org.peercast.pecaviewer.chat.adapter.MessageViewModel" />
 
         <import type="android.view.View" />
     </data>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:padding="3dp">
 
         <TextView
                 android:id="@+id/vNumber"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="top|left"
+                android:layout_alignParentTop="true"
                 android:minWidth="30sp"
                 android:paddingRight="3dp"
                 android:text="@{viewModel.number}"
                 android:textAppearance="?attr/textAppearanceListItem"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-            <TextView
-                    android:id="@+id/vBody"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top|left"
-                    android:text="@{viewModel.body}"
-                    android:textAppearance="?attr/textAppearanceListItem"
-                    android:textIsSelectable="true" />
-            <TextView
-                    android:id="@+id/vElapsedTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|right"
-                    android:alpha="0.4"
-                    android:text="@{viewModel.elapsedTime}"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:visibility="@{viewModel.elapsedTime.length() > 0 ? View.VISIBLE : View.INVISIBLE}" />
-        </FrameLayout>
-
-    </LinearLayout>
-    <!--
-    android:visibility="@{viewModel.elapsedTime.length() > 0 ? View.VISIBLE : View.GONE}"
-
-     <RelativeLayout
-                android:layout_width="match_parent"
+        <TextView
+                android:id="@+id/vBody"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="3dp"
-                android:background="@color/cyan_50"
-                >
+                android:text="@{viewModel.body}"
+                android:textAppearance="?attr/textAppearanceListItem"
+                android:textIsSelectable="true"
+                app:layout_constrainedWidth="true"
+                app:layout_constraintHorizontal_bias="0"
+                app:layout_constraintStart_toEndOf="@id/vNumber"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                    android:id="@+id/vNumber"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:gravity="top|left"
-                    android:minWidth="30sp"
-                    android:paddingRight="3dp"
-                    android:background="@color/brown_400"
-                    android:text="@{viewModel.number}"
-                    android:textAppearance="?attr/textAppearanceListItem"
-                    android:textStyle="bold" />
+        <TextView
+                android:id="@+id/vElapsedTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0.4"
+                android:text="@{viewModel.elapsedTime}"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:visibility="@{viewModel.elapsedTime.length() > 0 ? View.VISIBLE : View.INVISIBLE}"
+                app:layout_constraintBottom_toBottomOf="@+id/vBody"
+                app:layout_constraintRight_toRightOf="parent" />
 
-            <TextView
-                    android:id="@+id/vBody"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_alignParentRight="true"
-                    android:layout_toRightOf="@+id/vNumber"
-                    android:text="@{viewModel.body}"
-                    android:background="@color/amber_50"
-                    android:textAppearance="?attr/textAppearanceListItem"
-                    android:textIsSelectable="true" />
-
-            <TextView
-                    android:id="@+id/vElapsedTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentBottom="false"
-                    android:gravity="bottom"
-                    android:alpha="0.4"
-                    android:background="@color/blue_300"
-                    android:text="@{viewModel.elapsedTime}"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                     />
-        </RelativeLayout>
-    -->
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

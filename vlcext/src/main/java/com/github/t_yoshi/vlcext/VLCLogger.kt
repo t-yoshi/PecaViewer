@@ -1,5 +1,6 @@
 package com.github.t_yoshi.vlcext
 
+import androidx.annotation.WorkerThread
 import androidx.lifecycle.MutableLiveData
 import org.videolan.libvlc.LibVLC
 
@@ -48,18 +49,26 @@ data class VLCLogMessage(
 }
 
 object VLCLogger {
-    val liveData = MutableLiveData<VLCLogMessage>()
+    private var onLog: ((VLCLogMessage)->Unit)? = null
 
     private fun log(level: Int, ctx: VLCLogContext, msg: String) {
-        liveData.postValue(VLCLogMessage(level, ctx, msg))
+        onLog?.invoke(VLCLogMessage(level, ctx, msg))
+    }
+
+    fun register(libVLC: LibVLC, ld: MutableLiveData<VLCLogMessage>) {
+        onLog = ld::postValue
+        VLCExt.setLoggerCallback(libVLC, this)
+    }
+
+    fun register(libVLC: LibVLC, @WorkerThread onLog: (VLCLogMessage)->Unit) {
+        this.onLog = onLog
+        VLCExt.setLoggerCallback(libVLC, this)
     }
 
     fun unregister(libVLC: LibVLC) {
+        onLog = null
         VLCExt.setLoggerCallback(libVLC, null)
     }
 
-    fun register(libVLC: LibVLC) {
-        VLCExt.setLoggerCallback(libVLC, this)
-    }
 
 }

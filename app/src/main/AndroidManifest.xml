@@ -16,64 +16,14 @@
             android:icon="@drawable/ic_launcher"
             tools:ignore="GoogleAppIndexingWarning">
 
-        <service
-                android:name=".service.PecaViewerService"
-                android:exported="false">
-            <intent-filter>
-                <action android:name="android.media.browse.MediaBrowserService"/>
-                <action android:name="android.intent.action.MEDIA_BUTTON"/>
-            </intent-filter>
-        </service>
-        <receiver android:name="androidx.media.session.MediaButtonReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON"/>
-            </intent-filter>
-        </receiver>
-
         <activity
                 android:name=".MainActivity"
-                android:launchMode="standard"
                 android:windowSoftInputMode="adjustPan"
-                android:theme="@style/AppTheme.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
+                android:theme="@style/AppTheme.NoActionBar"
+                android:taskAffinity="org.peercast.pecaplay"
+                android:exported="true"/>
 
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-
-                <data android:scheme="pecaplay"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-
-                <data android:scheme="mmsh"/>
-                <data android:host="localhost"/>
-                <data android:pathPattern="/stream/.*\.wmv.*"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-
-                <data android:scheme="http"/>
-                <data android:host="localhost"/>
-                <data android:pathPattern="/stream/.*\.flv.*"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-
-                <data android:scheme="http"/>
-                <data android:host="localhost"/>
-                <data android:pathPattern="/stream/.*\.mkv.*"/>
-            </intent-filter>
-        </activity>
+        <service android:name=".service2.PecaViewerService" android:exported="false"/>
 
         <provider
                 android:name="androidx.core.content.FileProvider"

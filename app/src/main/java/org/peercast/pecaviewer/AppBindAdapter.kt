@@ -18,7 +18,7 @@ import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
 
 object AppBindAdapter {
     @JvmStatic
-    @BindingAdapter("peca:listItemBackground")
+    @BindingAdapter("listItemBackground")
     /**color=0のとき、selectableItemBackgroundをセットする。*/
     fun bindListItemBackground(view: ViewGroup, @ColorInt color : Int){
         if (color != 0) {
@@ -33,7 +33,7 @@ object AppBindAdapter {
 
 
     @JvmStatic
-    @BindingAdapter("peca:imageTintList")
+    @BindingAdapter("imageTintList")
     fun bindImageTintList(view: ImageView, @AttrRes attrColor : Int){
         val c = view.context
         val tv = TypedValue()
@@ -42,25 +42,25 @@ object AppBindAdapter {
     }
 
     @JvmStatic
-    @BindingAdapter("peca:refreshing")
+    @BindingAdapter("refreshing")
     fun bindRefreshing(view: SwipyRefreshLayout, isRefreshing: Boolean){
         view.isRefreshing = isRefreshing
     }
 
     @JvmStatic
-    @BindingAdapter("peca:colorScheme")
+    @BindingAdapter("colorScheme")
     fun bindColorScheme(view: SwipyRefreshLayout, @ColorInt color: Int){
         view.setColorSchemeColors(color)
     }
 
     @JvmStatic
-    @BindingAdapter("peca:srcCompat")
+    @BindingAdapter("srcCompat")
     fun bindSrcCompat(view: ImageView, d: Drawable) {
         view.setImageDrawable(d)
     }
 
     @JvmStatic
-    @BindingAdapter("peca:visibleAnimate")
+    @BindingAdapter("visibleAnimate")
     /**アニメーションしながら visible<->gone*/
     fun bindVisibleAnimate(view: View, visibility: Boolean){
         when {

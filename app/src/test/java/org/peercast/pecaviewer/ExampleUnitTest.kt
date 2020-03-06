@@ -3,8 +3,7 @@ package org.peercast.pecaviewer
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.peercast.pecaviewer.chat.net.TwitchApi
-import org.peercast.pecaviewer.chat.net.openChatConnection
+import org.peercast.pecaviewer.chat.net2.openBoardConnection
 import org.peercast.pecaviewer.util.SquareUtils
 import timber.log.Timber
 
@@ -34,24 +33,6 @@ class ExampleUnitTest {
     }
 
     @Test
-    fun twitchTest(){
-        //5v6vr0x4fhtgc0fvm0xzlsayu108uj
-        //hf6j3jt76a75mcietp2qdnb7rro3gn
-        val api = SquareUtils.retrofitBuilder()
-            .baseUrl(TwitchApi.BASE_URL)
-            .build().create(TwitchApi::class.java)
-
-        api.authorize("5v6vr0x4fhtgc0fvm0xzlsayu108uj").execute().let {
-            println(it.message())
-        }
-
-//        TwirkBuilder("ichicostars", "NoName", "5v6vr0x4fhtgc0fvm0xzlsayu108uj")
-//
-//            .build()
-//            .connect()
-    }
-
-    @Test
     fun bbsTest() {
 
         runBlocking {
@@ -61,7 +42,7 @@ class ExampleUnitTest {
             val u4 = "https://stamp.archsted.com/125"
             val u5 = "http://peercast.s602.xrea.com/test/read.cgi/bbs/1472558865/l50"
 
-            val conn = openChatConnection(u5)
+            val conn = openBoardConnection(u5)
             conn.threadConnections.forEach {
                 println(it.threadInfo)
             }

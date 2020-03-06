@@ -12,8 +12,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
 
-private class ShitarabaBoardInfo(m: Map<String, String>) : BaseBbsBoardInfo(m) {
-    override val url = m["TOP"] ?: ""
+private class ShitarabaBoardInfo(m: Map<String, String>) : BaseBbsBoardInfo() {
     val dir = m["DIR"] ?: "" //=game
     val bbsNumber = m["BBS"] ?: "" //=59608
     val categoryName = m["CATEGORY"] ?: ""  //=ゲーム/囲碁/将棋
@@ -24,21 +23,10 @@ private class ShitarabaBoardInfo(m: Map<String, String>) : BaseBbsBoardInfo(m) {
     override val title = m["BBS_TITLE"] ?: ""  //=ウメハラ総合板四代目(転載禁止)
     val comment = m["BBS_COMMENT"] ?: ""  //=ウメスレ
     val error = m["ERROR"] ?: ""
+    override val url = m["TOP"] ?: "https://jbbs.shitaraba.net/$dir/$bbsNumber/"
 
     override fun toString(): String {
         return "ShitarabaBoardInfo(dir='$dir', bbsNumber='$bbsNumber', categoryName='$categoryName', isAdult=$isAdult, numThreadStop=$numThreadStop, nonameName='$nonameName', deleteName='$deleteName', title='$title', comment='$comment', error='$error')"
-    }
-
-    override fun hashCode(): Int {
-        return javaClass.hashCode() * 31 +
-                bbsNumber.hashCode() * 13 +
-                categoryName.hashCode()
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return other is ShitarabaBoardInfo &&
-                other.bbsNumber == bbsNumber &&
-                other.categoryName == categoryName
     }
 }
 
@@ -47,7 +35,8 @@ private class ShitarabaThreadInfo(
     override val board: ShitarabaBoardInfo,
     datPath: String, title: String
 ) : BaseBbsThreadInfo(datPath, title) {
-    override val url = board.url + datPath
+    override val url =
+        "https://jbbs.shitaraba.net/bbs/read.cgi/${board.dir}/${board.bbsNumber}/${number}/"
     override val isPostable = numMessages < board.numThreadStop
 }
 
@@ -59,7 +48,7 @@ private val CC_MAX_STALE_10SEC = CacheControl.Builder()
     .maxStale(10, TimeUnit.SECONDS)
     .build()
 
-private class ShitarabaBoardConnection private constructor(
+private class ShitarabaBoardConnection(
     val client: BbsClient,
     override val info: ShitarabaBoardInfo
 ) : IBoardConnection {
@@ -68,14 +57,19 @@ private class ShitarabaBoardConnection private constructor(
             .url("https://jbbs.shitaraba.net/${info.dir}/${info.bbsNumber}/subject.txt")
             .cacheControl(CC_MAX_STALE_10SEC)
             .build()
-        return client.parseSubjectText(req, ",") { path, title ->
+        val threads =  client.parseSubjectText(req, ",") { path, title ->
             ShitarabaThreadInfo(info, path, title)
         }
+        if (threads.size >= 2 && threads.first() == threads.last()){
+            //最初と最後に同じスレッドがあるので除く
+            return threads.subList(0, threads.size - 1)
+        }
+        return threads
     }
 
     override suspend fun openThreadConnection(threadInfo: IThreadInfo): IBoardThreadConnection {
         if (threadInfo !is ShitarabaThreadInfo || threadInfo.board != info)
-            throw IllegalArgumentException("wrong threadInfo: $threadInfo")
+            throw IllegalArgumentException("wrong threadInfo: $threadInfo but board=$info")
         return ShitarabaBoardThreadConnection(this, threadInfo)
     }
 
@@ -135,10 +129,16 @@ private class ShitarabaBoardThreadConnection(
                 throw BbsClient.UnsatisfiableRequestException("result.isEmpty()")
             //最新レスを取得して追加
             val n = result.last().number + 1
-            execRequest("$rawUrl$n-", FORCE_NETWORK_NO_STORE)
+            if (n < info.board.numThreadStop)
+                execRequest("$rawUrl$n-", FORCE_NETWORK_NO_STORE)
         } catch (e: BbsClient.UnsatisfiableRequestException) {
             //キャッシュは古かったので.datを再取得
             execRequest(rawUrl, CacheControl.FORCE_NETWORK)
+        }
+
+        result.lastOrNull()?.let { m->
+            //レス数を更新
+            info.numMessages = m.number
         }
 
         return result
