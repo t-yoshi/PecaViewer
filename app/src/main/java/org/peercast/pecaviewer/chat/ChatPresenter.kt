@@ -218,7 +218,7 @@ private class BbsThreadPreference(c: Context) {
             return
         }
         //避難所ではスレ選択を記憶しない
-        if ("避難所" in thread.boardTopTitle)
+        if (isInShelter(thread))
             return
 
         val expire = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30)
@@ -231,7 +231,7 @@ private class BbsThreadPreference(c: Context) {
 
     fun restoreSelectedThread(boardInfo: IBoardInfo): ((IThreadInfo) -> Boolean)? {
         //避難所ではスレ選択を記憶しない
-        if ("避難所" in boardInfo.boardTopTitle)
+        if (isInShelter(boardInfo))
             return null
 
         val boardUrl = boardInfo.boardTopUrl
@@ -239,6 +239,13 @@ private class BbsThreadPreference(c: Context) {
             ?.replace(RE_EXPIRE, "")
 //            ?.also { Timber.d("$boardUrl <- $it") }
             ?.let { u -> { it.url == u } }
+    }
+
+    //避難所にいるかどうか
+    private fun isInShelter(boardInfo: IBoardInfo) : Boolean {
+        //避難所板 || 避難所スレ
+        return "避難所" in boardInfo.boardTopTitle ||
+                "避難所" in boardInfo.title
     }
 
     companion object {
