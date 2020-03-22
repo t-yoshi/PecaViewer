@@ -4,7 +4,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.peercast.pecaviewer.chat.net2.openBoardConnection
-import org.peercast.pecaviewer.util.SquareUtils
 import timber.log.Timber
 
 /**
@@ -41,19 +40,11 @@ class ExampleUnitTest {
             val u3 = "http://hibino.ddo.jp/bbs/peca/test/read.cgi/peca/1553274401/"
             val u4 = "https://stamp.archsted.com/125"
             val u5 = "http://peercast.s602.xrea.com/test/read.cgi/bbs/1472558865/l50"
+            val u6 = "http://komokomo.ddns.net/test/read.cgi/peercast/1582439674/"
 
-            val conn = openBoardConnection(u5)
-            conn.threadConnections.forEach {
-                println(it.threadInfo)
-            }
-            conn.threadConnections.first().let {
-                it.loadMessageLatest(100).forEach {
-                    println(it)
-                }
-
-//                it.postMessage(PostMessage("のら", "mail", "てすと")).let {
-//                    println(it?.string())
-//                }
+            val conn = openBoardConnection(u6)
+            conn.loadThreads().forEach {
+                println(it)
             }
         }
 

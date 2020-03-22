@@ -157,7 +157,9 @@ object ZeroChannelConnectionFactory : ConnectionFactory() {
                 if (th.number == threadNumber)
                     return base.openThreadConnection(th)
             }
-            Timber.e("thread not found: $url")
+            //過去ログ倉庫に
+            Timber.w("thread not found: $url")
+            return base
         } catch (e: IOException) {
             Timber.w(e, "connection failed: $url")
         }

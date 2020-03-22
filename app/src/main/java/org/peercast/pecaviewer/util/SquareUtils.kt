@@ -20,8 +20,8 @@ object SquareUtils : KoinComponent {
 
     private const val HTTP_USER_AGENT = "Mozilla/5.0 (Linux; U; Android) PecaPlay"
     private const val HTTP_CONNECT_TIMEOUT = 12L
-    private const val HTTP_RW_TIMEOUT = 100L
-    private const val MAX_CACHE_SIZE = 512 * 1024L
+    private const val HTTP_RW_TIMEOUT = 40L
+    private const val MAX_CACHE_SIZE = 2 * 1024 * 1024L
 
     private val connectionSpecs = listOf(
         ConnectionSpec.CLEARTEXT,

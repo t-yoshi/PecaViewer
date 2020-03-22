@@ -210,6 +210,9 @@ private class BbsThreadPreference(c: Context) {
             Timber.w("$thread is not stored.")
             return
         }
+        //避難所ではスレ選択を記憶しない
+        if ("避難所" in thread.boardTopTitle)
+            return
 
         val expire = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30)
         pref.edit {
@@ -220,6 +223,10 @@ private class BbsThreadPreference(c: Context) {
     }
 
     fun restoreSelectedThread(boardInfo: IBoardInfo): ((IThreadInfo) -> Boolean)? {
+        //避難所ではスレ選択を記憶しない
+        if ("避難所" in boardInfo.boardTopTitle)
+            return null
+
         val boardUrl = boardInfo.boardTopUrl
         return pref.getString(boardUrl, null)
             ?.replace(RE_EXPIRE, "")
