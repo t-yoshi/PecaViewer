@@ -13,14 +13,13 @@ import org.peercast.pecaviewer.util.localizedSystemMessage
 import timber.log.Timber
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlin.properties.Delegates
 
 class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
     private val prefs = BbsThreadPreference(chatViewModel.getApplication())
-    private var boardConn: IBoardConnection? = null
-        set(value) {
-            field = value
-            chatViewModel.chatToolbarTitle.postValue(value?.info?.title)
-        }
+    private var boardConn by Delegates.observable<IBoardConnection?>(null) { _, _, _ ->
+        updateChatToolbarTitle()
+    }
 
     //コンタクトURL。配信者が更新しないかぎり変わらない。
     private var contactUrl = ""
@@ -127,6 +126,14 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
         } catch (e: IOException) {
             postSnackErrorMessage(e)
         }
+    }
+
+    fun updateChatToolbarTitle(){
+        val title = when (chatViewModel.isThreadListVisible.value) {
+            true -> boardConn?.info?.boardTopTitle
+            else -> boardConn?.info?.title
+        }
+        chatViewModel.chatToolbarTitle.postValue(title)
     }
 
     /**掲示板に書き込む*/

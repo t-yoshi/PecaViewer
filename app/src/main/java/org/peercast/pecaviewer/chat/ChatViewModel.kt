@@ -37,6 +37,9 @@ class ChatViewModel(a: Application) : AndroidViewModel(a) {
     val snackbarMessage = MutableLiveData<SnackbarMessage>()
 
     init {
+        isThreadListVisible.observeForever {
+            presenter.updateChatToolbarTitle()
+        }
 //        isToolbarVisible.observeForever {
 //            if (it) {
 //
