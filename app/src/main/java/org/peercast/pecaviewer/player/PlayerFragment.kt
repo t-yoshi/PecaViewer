@@ -1,5 +1,6 @@
 package org.peercast.pecaviewer.player
 
+import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Intent
@@ -67,12 +68,32 @@ class PlayerFragment : Fragment(), ServiceConnection {
             }
         }
 
-        vFullScreen.setOnClickListener {
-            playerViewModel.isFullScreenMode.let {
-                if (it.value != true)
-                    isTemporaryBackgroundPlaying = true
-                it.value = it.value != true
-            }
+        vFullScreen.setOnClickListener(::onFullScreenClicked)
+        view.setOnTouchListener(DoubleTabDetector(view, ::onFullScreenClicked))
+    }
+
+    private fun onFullScreenClicked(v__: View) {
+        playerViewModel.isFullScreenMode.let {
+            if (it.value != true)
+                isTemporaryBackgroundPlaying = true
+            it.value = it.value != true
+        }
+    }
+
+    private class DoubleTabDetector(
+        private val view: View,
+        private val onDoubleTap: (View) -> Unit
+    ) : View.OnTouchListener, GestureDetector.SimpleOnGestureListener() {
+        private val detector = GestureDetector(view.context, this)
+
+        override fun onDoubleTap(e: MotionEvent?): Boolean {
+            onDoubleTap(view)
+            return true
+        }
+
+        @SuppressLint("ClickableViewAccessibility")
+        override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+            return detector.onTouchEvent(event)
         }
     }
 
@@ -153,15 +174,15 @@ class PlayerFragment : Fragment(), ServiceConnection {
             s.detachViews()
         }
 
-        context?.let { c->
+        context?.let { c ->
             IPlayerService.unbind(c, this)
         }
         service = null
     }
 
     override fun onServiceConnected(name: ComponentName, service_: IBinder) {
-        service = (service_ as IPlayerService.Binder).service.also {s->
-           s.attachViews(vVLCVideoLayout)
+        service = (service_ as IPlayerService.Binder).service.also { s ->
+            s.attachViews(vVLCVideoLayout)
         }
     }
 
