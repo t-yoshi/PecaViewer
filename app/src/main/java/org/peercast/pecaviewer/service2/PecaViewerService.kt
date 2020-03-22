@@ -64,7 +64,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     override fun onCreate() {
         super.onCreate()
 
-        libVLC = LibVLC(this)
+        libVLC = LibVLC(this, arrayListOf("--http-reconnect"))
         Timber.i("VLC: version=${libVLC.version()}")
 
         player = MediaPlayer(libVLC)
@@ -82,6 +82,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             }
         }
         VLCLogger.register(libVLC) { log ->
+            Timber.d("$log")
             eventLiveData.post(this@PecaViewerService, VLCLogEvent(log))
         }
     }
