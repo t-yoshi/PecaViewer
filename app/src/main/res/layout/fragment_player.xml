@@ -41,7 +41,7 @@
                         android:id="@+id/vFullScreen"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        peca:srcCompat="@{safeUnbox(viewModel.isFullScreenMode) ? @drawable/ic_fullscreen_exit_white_36dp : @drawable/ic_fullscreen_white_36dp}" />
+                        android:src="@{safeUnbox(viewModel.isFullScreenMode) ? @drawable/ic_fullscreen_exit_white_36dp : @drawable/ic_fullscreen_white_36dp}" />
 
                 <androidx.appcompat.widget.ActionMenuView
                         android:id="@+id/vPlayerMenu"
@@ -60,7 +60,7 @@
                     android:scaleType="fitCenter"
                     android:tint="@color/grey_300"
                     android:visibility="visible"
-                    peca:srcCompat="@{safeUnbox(viewModel.isPlaying) ? @drawable/ic_pause_circle_filled_black_96dp : @drawable/ic_play_circle_filled_black_96dp}" />
+                    android:src="@{safeUnbox(viewModel.isPlaying) ? @drawable/ic_pause_circle_filled_black_96dp : @drawable/ic_play_circle_filled_black_96dp}" />
         </FrameLayout>
     </FrameLayout>
 

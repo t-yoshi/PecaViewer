@@ -1,6 +1,5 @@
 package org.peercast.pecaviewer
 
-import android.graphics.drawable.Drawable
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -51,12 +50,6 @@ object AppBindAdapter {
     @BindingAdapter("colorScheme")
     fun bindColorScheme(view: SwipyRefreshLayout, @ColorInt color: Int){
         view.setColorSchemeColors(color)
-    }
-
-    @JvmStatic
-    @BindingAdapter("srcCompat")
-    fun bindSrcCompat(view: ImageView, d: Drawable) {
-        view.setImageDrawable(d)
     }
 
     @JvmStatic
