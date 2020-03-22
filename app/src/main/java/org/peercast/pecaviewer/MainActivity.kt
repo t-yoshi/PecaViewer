@@ -80,9 +80,9 @@ class MainActivity : AppCompatActivity(),
 
         onViewCreated()
 
-        playerViewModel.isFullScreenMode.let {
-            it.value = requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            it.observe(this, Observer {
+        playerViewModel.isFullScreenMode.let { ld ->
+            ld.value = requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            ld.observe(this, Observer {
                 appPreference.isFullScreenMode = it
                 requestedOrientation = when (it) {
                     true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE

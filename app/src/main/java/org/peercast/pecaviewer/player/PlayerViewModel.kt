@@ -133,9 +133,15 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
         }
     }
 
-//    init {
+    init {
+        //フルスクリーン直後はボタン類を隠す
+        isFullScreenMode.observeForever {
+            if (it)
+                isControlsViewVisible.value = false
+        }
+
 //        eventLiveData.observeForever {
 //            Timber.d("$it")
 //        }
-//    }
+    }
 }
