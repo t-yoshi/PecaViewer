@@ -1,8 +1,10 @@
 package org.peercast.pecaviewer.service2
 
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.media.AudioManager
 import android.net.Uri
@@ -60,6 +62,16 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
 
     private var isViewAttached = false
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                ACTION_PLAY -> play()
+                ACTION_PAUSE -> pause()
+                ACTION_STOP -> stop()
+                else -> Timber.e("$intent")
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -85,6 +97,11 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             Timber.d("$log")
             eventLiveData.post(this@PecaViewerService, VLCLogEvent(log))
         }
+        registerReceiver(receiver, IntentFilter().also {
+            it.addAction(ACTION_PLAY)
+            it.addAction(ACTION_STOP)
+            it.addAction(ACTION_PAUSE)
+        })
     }
 
     override fun onBind(intent: Intent): Binder {
@@ -261,6 +278,8 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
         eventLiveData.removeObserver(notificationHelper)
         AudioManagerCompat.abandonAudioFocusRequest(audioManager, audioFocusRequest)
+
+        unregisterReceiver(receiver)
 
         detachViews()
         player.release()

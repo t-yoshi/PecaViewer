@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.annotation.RequiresApi
@@ -88,16 +87,10 @@ class NotificationHelper(private val service: PecaViewerService) : Observer<Play
     )
 
     private fun buildActionPendingIntent(act: String): PendingIntent {
-        val intent = Intent(
-            act,
-            Uri.EMPTY,
-            service,
-            PecaViewerService::class.java
-        )
-        return PendingIntent.getService(
+        return PendingIntent.getBroadcast(
             service,
             0,
-            intent,
+            Intent(act).also { it.setPackage(service.packageName) },
             PendingIntent.FLAG_UPDATE_CURRENT
         )
     }

@@ -1,7 +1,6 @@
 package org.peercast.pecaviewer
 
-import android.content.ComponentName
-import android.content.ServiceConnection
+import android.content.*
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Build
@@ -28,6 +27,7 @@ import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.chat.PostMessageDialogFragment
 import org.peercast.pecaviewer.databinding.ActivityMainBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
+import org.peercast.pecaviewer.service2.ACTION_STOP
 import org.peercast.pecaviewer.service2.IPlayerService
 import org.peercast.pecaviewer.util.ThemeUtils
 import kotlin.coroutines.CoroutineContext
@@ -105,6 +105,8 @@ class MainActivity : AppCompatActivity(),
                 it.play()
         }
 
+        registerReceiver(receiver, IntentFilter(ACTION_STOP))
+
         IPlayerService.bind(this, this)
     }
 
@@ -148,6 +150,15 @@ class MainActivity : AppCompatActivity(),
                     }
                     else -> SlidingUpPanelLayout.PanelState.EXPANDED
                 }
+            }
+        }
+    }
+
+    //通知バーの停止ボタンが押されたとき
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                ACTION_STOP -> finish()
             }
         }
     }
@@ -232,6 +243,7 @@ class MainActivity : AppCompatActivity(),
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()
+        unregisterReceiver(receiver)
         if (service != null)
             IPlayerService.unbind(this, this)
     }
