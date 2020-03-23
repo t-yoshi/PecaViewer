@@ -176,6 +176,12 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         messageAdapter.saveInstanceState(outState)
     }
 
+    override fun onResume() {
+        super.onResume()
+        //復帰時に再描画
+        messageAdapter.notifyDataSetChanged()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()
