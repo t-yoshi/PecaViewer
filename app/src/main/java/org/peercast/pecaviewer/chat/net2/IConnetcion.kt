@@ -79,7 +79,7 @@ interface IBoardThreadPoster {
 }
 
 /**掲示板スレッドへの接続と書き込み*/
-interface IBoardThreadConnection : IBoardConnection, IBoardThreadPoster {
+interface IBoardThreadConnection : IBoardConnection {
     override val info: IThreadInfo
 
     /**レスを取得する

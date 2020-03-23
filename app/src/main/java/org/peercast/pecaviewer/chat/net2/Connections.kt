@@ -25,10 +25,6 @@ private class MockBbsConnection(private val url: String) : IBoardThreadConnectio
             BbsMessage(info, 1, "", "", "", url, "")
         )
     }
-
-    override suspend fun postMessage(m: PostMessage): String {
-        throw NotImplementedError()
-    }
 }
 
 abstract class ConnectionFactory {

@@ -104,7 +104,7 @@ private class ShitarabaBoardConnection(
 private class ShitarabaBoardThreadConnection(
     private val base: ShitarabaBoardConnection,
     override val info: ShitarabaThreadInfo
-) : IBoardConnection by base, IBoardThreadConnection {
+) : IBoardConnection by base, IBoardThreadConnection, IBoardThreadPoster {
 
     override suspend fun loadMessages(): List<BbsMessage> {
         val result = ArrayList<BbsMessage>(1000)

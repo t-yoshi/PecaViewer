@@ -39,7 +39,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
             val conn = boardConn
             if (conn is IBoardThreadConnection) {
                 chatViewModel.selectedThreadPoster.postValue(
-                    if (conn.info.isPostable) conn else null
+                    if (conn.info.isPostable && conn is IBoardThreadPoster) conn else null
                 )
                 val messages = conn.loadMessages()
                 if (true || messages != chatViewModel.messageLiveData.value) {

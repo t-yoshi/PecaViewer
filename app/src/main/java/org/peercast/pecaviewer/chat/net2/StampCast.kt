@@ -97,16 +97,6 @@ private class StampCastPageConnection(
             }
         } ?: throw IOException("body is null")
     }
-
-    override suspend fun postMessage(m: PostMessage): String {
-        throw NotImplementedError()
-    }
-
-    companion object {
-        private val MOSHI = Moshi.Builder()
-            //.add(KotlinJsonAdapterFactory()        )
-            .build()
-    }
 }
 
 object StampCastConnectionFactory : ConnectionFactory() {

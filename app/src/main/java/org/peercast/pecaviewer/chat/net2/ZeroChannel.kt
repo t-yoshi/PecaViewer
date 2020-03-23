@@ -78,7 +78,7 @@ private class ZeroChannelBoardConnection(
 private class ZeroChannelBoardThreadConnection(
     private val base: ZeroChannelBoardConnection,
     override val info: ZeroChannelThreadInfo
-) : IBoardConnection by base, IBoardThreadConnection {
+) : IBoardConnection by base, IBoardThreadConnection, IBoardThreadPoster {
 
     override suspend fun loadMessages(): List<IMessage> {
         val req = Request.Builder()
