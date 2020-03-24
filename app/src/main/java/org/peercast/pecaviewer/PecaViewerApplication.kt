@@ -19,7 +19,7 @@ import timber.log.Timber
 
 private val appModule = module {
     single { AppPreference(get()) }
-    viewModel { AppViewModel(get()) }
+    viewModel { (pvm: PlayerViewModel, cvm: ChatViewModel)-> AppViewModel(get(), pvm, cvm) }
     viewModel { PlayerViewModel(get()) }
     viewModel { ChatViewModel(get()) }
 

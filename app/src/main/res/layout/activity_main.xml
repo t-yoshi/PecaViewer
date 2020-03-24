@@ -77,6 +77,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|right"
                 android:layout_margin="30dp"
+                android:alpha="@{safeUnbox(appViewModel.isImmersiveMode) ? 0.3f : 1f}"
                 android:enabled="@{chatViewModel.selectedThreadPoster != null}"
                 android:src="@drawable/ic_mode_edit_black_24dp"
                 peca:imageTintList="@{android.R.attr.textColorPrimary}"

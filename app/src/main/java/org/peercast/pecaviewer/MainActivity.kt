@@ -22,6 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import org.peercast.pecaplay.PecaPlayIntent
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.chat.PostMessageDialogFragment
@@ -39,9 +40,14 @@ class MainActivity : AppCompatActivity(),
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
 
-    private val appViewModel by viewModel<AppViewModel>()
     private val playerViewModel by viewModel<PlayerViewModel>()
     private val chatViewModel by viewModel<ChatViewModel>()
+    private val appViewModel by viewModel<AppViewModel> {
+        parametersOf(
+            playerViewModel,
+            chatViewModel
+        )
+    }
     private val appPreference by inject<AppPreference>()
     private var onServiceConnect: (IPlayerService) -> Unit = {}
     private var service: IPlayerService? = null
@@ -112,6 +118,10 @@ class MainActivity : AppCompatActivity(),
 
     private fun onViewCreated() {
         vPostDialogButton.setOnClickListener {
+            //フルスクリーン時には一時的にコントロールボタンを
+            //表示させないとOSのナビゲーションバーが残る
+            if (playerViewModel.isFullScreenMode.value == true)
+                playerViewModel.isControlsViewVisible.value = true
             val f = PostMessageDialogFragment()
             f.show(supportFragmentManager, "tag#PostMessageDialogFragment")
         }
@@ -122,11 +132,8 @@ class MainActivity : AppCompatActivity(),
             vSlidingUpPanel.anchorPoint = 1f
             initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
 
-            playerViewModel.isControlsViewVisible.observe(this, Observer {
-                window.decorView.systemUiVisibility = if (!it &&
-                    playerViewModel.isFullScreenMode.value == true &&
-                    vSlidingUpPanel.panelState != SlidingUpPanelLayout.PanelState.COLLAPSED
-                ) {
+            appViewModel.isImmersiveMode.observe(this, Observer {
+                window.decorView.systemUiVisibility = if (it) {
                     View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
                             View.SYSTEM_UI_FLAG_FULLSCREEN or
                             View.SYSTEM_UI_FLAG_IMMERSIVE or
