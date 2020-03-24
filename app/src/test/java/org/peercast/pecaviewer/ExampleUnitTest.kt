@@ -1,9 +1,14 @@
 package org.peercast.pecaviewer
 
+import com.squareup.moshi.Moshi
 import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.koin.core.context.startKoin
+import org.koin.dsl.module
 import org.peercast.pecaviewer.chat.net2.openBoardConnection
+import org.peercast.pecaviewer.util.ISquareHolder
 import timber.log.Timber
 
 /**
@@ -15,10 +20,20 @@ class ExampleUnitTest {
     init {
         Timber.plant(object : Timber.Tree(){
             override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-                println( message )
+                println("$tag $message")
                 t?.printStackTrace()
             }
         })
+        startKoin {
+            modules(module {
+                single<ISquareHolder> { TestSquareHolder() }
+            })
+        }
+    }
+
+    private class TestSquareHolder : ISquareHolder {
+        override val okHttpClient: OkHttpClient = OkHttpClient.Builder().build()
+        override val moshi: Moshi = Moshi.Builder().build()
     }
 
     //http://hibino.ddo.jp/bbs/test/read.cgi/peca/1552237443/
@@ -41,8 +56,9 @@ class ExampleUnitTest {
             val u4 = "https://stamp.archsted.com/125"
             val u5 = "http://peercast.s602.xrea.com/test/read.cgi/bbs/1472558865/l50"
             val u6 = "http://komokomo.ddns.net/test/read.cgi/peercast/1582439674/"
+            val u7 = "http://bbs.jpnkn.com/test/read.cgi/king7144/1584886487"
 
-            val conn = openBoardConnection(u6)
+            val conn = openBoardConnection(u7)
             conn.loadThreads().forEach {
                 println(it)
             }

@@ -2,9 +2,10 @@ package org.peercast.pecaviewer.chat.net2
 
 
 import com.squareup.moshi.Json
-import com.squareup.moshi.Moshi
 import okhttp3.Request
-import org.peercast.pecaviewer.util.SquareUtils
+import org.koin.core.KoinComponent
+import org.koin.core.get
+import org.peercast.pecaviewer.util.ISquareHolder
 import org.peercast.pecaviewer.util.runAwait
 import java.io.IOException
 
@@ -78,17 +79,18 @@ private class StampCastConnection(val id: Int) : IBoardConnection {
 private class StampCastPageConnection(
     private val base: StampCastConnection,
     override val info: StampCastThreadInfo
-) : IBoardThreadConnection, IBoardConnection by base {
+) : IBoardThreadConnection, IBoardConnection by base, KoinComponent {
 
     override suspend fun loadMessages(): List<IMessage> {
-        val listAdapter = MOSHI.adapter(StampCastStamps::class.java)
+        val square = get<ISquareHolder>()
+        val listAdapter = square.moshi.adapter(StampCastStamps::class.java)
 
         val req = Request.Builder()
             .url("https://stamp.archsted.com/api/v1/rooms/${base.id}/stamps/guest?page=${info.page}&sort=all&tag=")
             .header("Cache-Control", "private, must-revalidate, max-stale=5")
             .build()
 
-        return SquareUtils.client.newCall(req).runAwait { res->
+        return square.okHttpClient.newCall(req).runAwait { res->
             res.body?.let {
                 listAdapter.fromJson(it.string())
                     ?.stamps?.mapIndexed { i, m ->

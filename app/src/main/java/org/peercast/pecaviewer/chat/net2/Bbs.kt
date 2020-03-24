@@ -2,16 +2,21 @@ package org.peercast.pecaviewer.chat.net2
 
 import androidx.core.text.HtmlCompat
 import okhttp3.Request
+import org.koin.core.KoinComponent
+import org.koin.core.get
 import org.peercast.pecaviewer.util.DateUtils
-import org.peercast.pecaviewer.util.SquareUtils
+import org.peercast.pecaviewer.util.ISquareHolder
 import org.peercast.pecaviewer.util.runAwait
+import org.unbescape.html.HtmlEscape
 import timber.log.Timber
 import java.io.IOException
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
 
-class BbsClient(val defaultCharset: Charset) {
+class BbsClient(val defaultCharset: Charset) : KoinComponent {
+    protected val square = get<ISquareHolder>()
+
     suspend fun <T : IThreadInfo> parseSubjectText(
         req: Request, delimiter: String,
         f: (path: String, title: String) -> T
@@ -29,7 +34,7 @@ class BbsClient(val defaultCharset: Charset) {
     }
 
     private suspend fun <T> readStream(req: Request, f: (Sequence<String>) -> T): T {
-        return SquareUtils.client.newCall(req).runAwait { res ->
+        return square.okHttpClient.newCall(req).runAwait { res ->
             if (res.code == 504)
                 throw UnsatisfiableRequestException(res.message)
 
@@ -43,7 +48,7 @@ class BbsClient(val defaultCharset: Charset) {
     class UnsatisfiableRequestException(msg: String) : IOException(msg)
 
     suspend fun post(req: Request): String {
-        val ret = SquareUtils.client.newCall(req).runAwait { res ->
+        val ret = square.okHttpClient.newCall(req).runAwait { res ->
             val body = res.body ?: throw IOException("body returned null.")
             val cs = body.contentType()?.charset() ?: defaultCharset
             body.byteStream().reader(cs).readText()
@@ -88,9 +93,9 @@ abstract class BaseBbsThreadInfo(
     datPath: String, title_: String
 ) : IThreadInfo {
 
-    final override val title = BbsUtils.stripHtml(
+    final override val title = HtmlEscape.unescapeHtml(
         title_.substringBeforeLast('(')
-    )
+    ).trimEnd()
 
     //XXXX.cgi | XXXX.dat
     val number: String = datPath.substringBefore(".") //.toIntOrNull() ?: 0
