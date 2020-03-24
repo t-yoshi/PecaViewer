@@ -129,7 +129,7 @@ private class ZeroChannelBoardThreadConnection(
 
 object ZeroChannelConnectionFactory : ConnectionFactory() {
     //[baseUrl, boardName, threadNumber]
-    private val RE_URL_1 = """^(https?://.+/)test/read\.cgi/(\w+)/(\d+)/""".toRegex()
+    private val RE_URL_1 = """^(https?://.+/)test/read\.cgi/(\w+)/(\d+)/?""".toRegex()
 
     //[baseUrl, boardName]
     private val RE_URL_2 = """^(https?://.+/)(?:[^/]+/)*(\w+)/$""".toRegex()
