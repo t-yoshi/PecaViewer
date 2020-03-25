@@ -13,6 +13,7 @@
             android:layout_weight="1"
             android:focusable="true"
             android:focusableInTouchMode="true"
+            android:imeOptions="actionSend"
             android:inputType="text"
             android:lines="1"
             android:maxLines="1" />
@@ -27,13 +28,13 @@
             android:padding="5dp">
 
         <com.google.android.material.button.MaterialButton
-                style="@style/IconOnlyButton"
                 android:id="@+id/vSend"
+                style="@style/IconOnlyButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                app:icon="@drawable/ic_send_black_24dp"
-                android:enabled="false" />
+                android:enabled="false"
+                app:icon="@drawable/ic_send_black_24dp" />
 
     </FrameLayout>
 </LinearLayout>

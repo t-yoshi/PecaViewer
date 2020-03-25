@@ -3,6 +3,8 @@ package org.peercast.pecaviewer.chat
 import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
+import android.view.View
+import android.view.inputmethod.EditorInfo
 import androidx.core.widget.doOnTextChanged
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -33,7 +35,7 @@ class PostMessageDialogFragment : BottomSheetDialogFragment(),
         val u = poster.info.url
         with(dialog as BottomSheetDialog) {
             chatViewModel.messageDraft[u]?.let(vEdit::setText)
-            vSend.setOnClickListener {
+            val sendClickListener = View.OnClickListener {
                 vEdit.isEnabled = false
                 vSend.isEnabled = false
                 chatViewModel.presenter.postMessage(
@@ -43,10 +45,20 @@ class PostMessageDialogFragment : BottomSheetDialogFragment(),
                 chatViewModel.messageDraft.remove(u)
                 dismiss()
             }
+
+            vSend.setOnClickListener(sendClickListener)
+            vEdit.setOnEditorActionListener { v, actionId, _ ->
+                if (actionId == EditorInfo.IME_ACTION_SEND && vSend.isEnabled){
+                    sendClickListener.onClick(v)
+                    true
+                } else {
+                    false
+                }
+            }
             vEdit.hint = "${poster.info.title} (${poster.info.numMessages})"
             vEdit.requestFocus()
 
-            vEdit.doOnTextChanged { text, start, count, after ->
+            vEdit.doOnTextChanged { text, _, _, _ ->
                 chatViewModel.messageDraft[u] = text?.toString() ?: ""
                 vSend.isEnabled = text?.isNotEmpty() == true
             }

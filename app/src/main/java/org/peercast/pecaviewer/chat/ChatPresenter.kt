@@ -1,12 +1,12 @@
 package org.peercast.pecaviewer.chat
 
+import android.app.Application
 import android.content.Context
 import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import org.koin.core.KoinComponent
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.net2.*
 import org.peercast.pecaviewer.util.localizedSystemMessage
@@ -15,8 +15,9 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
-class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
-    private val prefs = BbsThreadPreference(chatViewModel.getApplication())
+class ChatPresenter(private val chatViewModel: ChatViewModel) {
+    private val a = chatViewModel.getApplication<Application>()
+    private val prefs = BbsThreadPreference(a)
     private var boardConn by Delegates.observable<IBoardConnection?>(null) { _, _, _ ->
         updateChatToolbarTitle()
     }
@@ -137,8 +138,8 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) : KoinComponent {
     }
 
     /**掲示板に書き込む*/
-    fun postMessage(poster: IBoardThreadPoster, msg: PostMessage) {
-        chatViewModel.viewModelScope.launch {
+    fun postMessage(poster: IBoardThreadPoster, msg: PostMessage) : Job {
+        return chatViewModel.viewModelScope.launch {
             val d = async {
                 val r = kotlin.runCatching { poster.postMessage(msg) }
                 postSnackMessage(r)
