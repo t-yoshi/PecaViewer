@@ -145,7 +145,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
                 postSnackMessage(r)
                 r.isSuccess
             }
-            postSnackMessage("Sending...", d)
+            postSnackMessage(a.getText(R.string.sending), d)
 
             if (!d.isCancelled && d.await()) {
                 //送信成功したのでスレッドを再読み込み

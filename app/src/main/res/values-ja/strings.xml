@@ -2,4 +2,5 @@
     <string name="video_scale">画面スケール</string>
     <string name="background">バックグラウンド</string>
     <string name="screenshot" >スクリーンショット</string>
+    <string name="sending">送信しています...</string>
 </resources>
