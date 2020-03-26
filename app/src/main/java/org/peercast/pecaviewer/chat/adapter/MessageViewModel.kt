@@ -1,10 +1,10 @@
 package org.peercast.pecaviewer.chat.adapter
 
+import android.net.Uri
 import android.text.SpannableStringBuilder
 import android.text.style.URLSpan
 import androidx.core.text.HtmlCompat
 import androidx.core.text.set
-import androidx.databinding.BaseObservable
 import androidx.databinding.ObservableField
 import org.peercast.pecaviewer.chat.net2.BbsMessage
 import org.peercast.pecaviewer.chat.net2.IMessage
@@ -26,6 +26,8 @@ class MessageViewModel {
 
     val elapsedTime = ObservableField<CharSequence>()
 
+    val thumbnails = ObservableField<List<Uri>>()
+
     fun setMessage(m: IMessage, isShowElapsedTime: Boolean = true) {
         number.set("${m.number}")
         name.set(m.name)
@@ -43,6 +45,30 @@ class MessageViewModel {
         } else {
             elapsedTime.set("")
         }
+
+        val thumbnails_ = ArrayList<Uri>()
+        RE_URL.findAll(ssbBody).mapNotNull {
+            var u = it.groupValues[0]
+            if (u.startsWith("ttp"))
+                u = "h$u"
+            val url = Uri.parse(u)
+            when {
+                ThumbnailAdapter.isImageUrl(url) -> url
+                else -> null
+            }
+        }.let(thumbnails_::addAll)
+
+/*
+
+        (1..m.number % 5).forEach {
+            thumbnails_.add(Uri.parse("https://i.imgur.com/hJCEq8P.jpg"))
+        }
+        (1..m.number % 5).forEach {
+            thumbnails_.add(Uri.parse("https://www.youtube.com/watch?v=rTSFxx76P0A"))
+        }
+// */
+
+        thumbnails.set(thumbnails_)
 
         applyUrlSpan(ssbBody)
         body.set(ssbBody)

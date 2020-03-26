@@ -104,8 +104,10 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
             threadAdapter.selected = it
         })
         chatViewModel.messageLiveData.observe(viewLifecycleOwner, Observer {
-            messageAdapter.setItems(it)
-            scrollToBottom()
+            launch {
+                messageAdapter.setItems(it)
+                scrollToBottom()
+            }
         })
 
         chatViewModel.snackbarMessage.observe(owner, SnackbarObserver(view, activity?.vPostDialogButton))

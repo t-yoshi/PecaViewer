@@ -1,20 +1,24 @@
 package org.peercast.pecaviewer.chat.adapter
 
+import androidx.annotation.MainThread
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 open class ItemsHolder<T> {
-    private var oldItems = emptyList<T>()
-    private var newItems = emptyList<T>()
 
-    private val callback = object : DiffUtil.Callback() {
-        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-            return oldItems[oldItemPosition] == newItems[newItemPosition]
-        }
-
+    private inner class ItemsHolderCallback(
+        val newItems: List<T>,
+        private val oldItems: List<T>
+    ) : DiffUtil.Callback() {
         override fun getOldListSize() = oldItems.size
 
         override fun getNewListSize() = newItems.size
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldItems[oldItemPosition] == newItems[newItemPosition]
+        }
 
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
             return areContentsTheSame(oldItems[oldItemPosition], newItems[newItemPosition])
@@ -25,20 +29,42 @@ open class ItemsHolder<T> {
         }
     }
 
+    private var callback = ItemsHolderCallback(emptyList(), emptyList())
+
     protected open fun areContentsTheSame(oldItem: T, newItem: T): Boolean {
         return oldItem == newItem
     }
 
     protected open fun getChangePayload(oldItem: T, newItem: T): Any? = null
 
-
-    fun update(items: List<T>, adapter: RecyclerView.Adapter<*>) {
-        oldItems = newItems
-        newItems = items
-        DiffUtil.calculateDiff(callback).dispatchUpdatesTo(adapter)
+    @MainThread
+    fun update(items: List<T>, adapter: RecyclerView.Adapter<*>, detectMoves: Boolean = false) {
+        callback = ItemsHolderCallback(items, callback.newItems)
+        DiffUtil.calculateDiff(callback, detectMoves).dispatchUpdatesTo(adapter)
     }
 
-    operator fun get(index: Int) = newItems[index]
+    suspend fun asyncUpdate(
+        items: List<T>,
+        adapter: RecyclerView.Adapter<*>,
+        detectMoves: Boolean = false
+    ) {
+        val cb = ItemsHolderCallback(items, callback.newItems)
+        val res = withContext(Dispatchers.Default) {
+            DiffUtil.calculateDiff(cb, detectMoves)
+        }
+        withContext(Dispatchers.Main) {
+            callback = cb
+            res.dispatchUpdatesTo(adapter)
+        }
+    }
 
-    val size: Int get() = newItems.size
+    @MainThread
+    fun clear(adapter: RecyclerView.Adapter<*>){
+        callback = ItemsHolderCallback(emptyList(), emptyList())
+        adapter.notifyDataSetChanged()
+    }
+
+    operator fun get(index: Int) = callback.newItems[index]
+
+    val size: Int get() = callback.newItems.size
 }

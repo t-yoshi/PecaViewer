@@ -1,5 +1,6 @@
 package org.peercast.pecaviewer
 
+import android.net.Uri
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -12,14 +13,17 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.databinding.BindingAdapter
+import androidx.recyclerview.widget.RecyclerView
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
+import org.koin.core.KoinComponent
+import org.peercast.pecaviewer.chat.adapter.ThumbnailAdapter
 
 
-object AppBindAdapter {
+object AppBindAdapter : KoinComponent {
     @JvmStatic
     @BindingAdapter("listItemBackground")
-    /**color=0のとき、selectableItemBackgroundをセットする。*/
-    fun bindListItemBackground(view: ViewGroup, @ColorInt color : Int){
+            /**color=0のとき、selectableItemBackgroundをセットする。*/
+    fun bindListItemBackground(view: ViewGroup, @ColorInt color: Int) {
         if (color != 0) {
             view.setBackgroundColor(color)
         } else {
@@ -30,10 +34,18 @@ object AppBindAdapter {
         }
     }
 
+    @JvmStatic
+    @BindingAdapter("thumbnailUrls")
+    fun bindThumbnailUrls(view: RecyclerView, urls: List<Uri>) {
+        with(view.adapter as ThumbnailAdapter){
+            imageUrls = urls
+            notifyDataSetChanged()
+        }
+    }
 
     @JvmStatic
     @BindingAdapter("imageTintList")
-    fun bindImageTintList(view: ImageView, @AttrRes attrColor : Int){
+    fun bindImageTintList(view: ImageView, @AttrRes attrColor: Int) {
         val c = view.context
         val tv = TypedValue()
         c.theme.resolveAttribute(attrColor, tv, true)
@@ -42,20 +54,20 @@ object AppBindAdapter {
 
     @JvmStatic
     @BindingAdapter("refreshing")
-    fun bindRefreshing(view: SwipyRefreshLayout, isRefreshing: Boolean){
+    fun bindRefreshing(view: SwipyRefreshLayout, isRefreshing: Boolean) {
         view.isRefreshing = isRefreshing
     }
 
     @JvmStatic
     @BindingAdapter("colorScheme")
-    fun bindColorScheme(view: SwipyRefreshLayout, @ColorInt color: Int){
+    fun bindColorScheme(view: SwipyRefreshLayout, @ColorInt color: Int) {
         view.setColorSchemeColors(color)
     }
 
     @JvmStatic
     @BindingAdapter("visibleAnimate")
-    /**アニメーションしながら visible<->gone*/
-    fun bindVisibleAnimate(view: View, visibility: Boolean){
+            /**アニメーションしながら visible<->gone*/
+    fun bindVisibleAnimate(view: View, visibility: Boolean) {
         when {
             visibility && !view.isVisible -> {
                 val a = AlphaAnimation(0.2f, 1f)
@@ -75,9 +87,10 @@ object AppBindAdapter {
     }
 
 
-    private class SimpleAnimationListener(private val onEnd : (Animation)->Unit) : Animation.AnimationListener {
+    private class SimpleAnimationListener(private val onEnd: (Animation) -> Unit) :
+        Animation.AnimationListener {
         override fun onAnimationRepeat(animation: Animation) = Unit
         override fun onAnimationEnd(animation: Animation) = onEnd(animation)
-        override fun onAnimationStart(animation: Animation)  = Unit
+        override fun onAnimationStart(animation: Animation) = Unit
     }
 }

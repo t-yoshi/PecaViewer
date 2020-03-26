@@ -20,7 +20,7 @@ class PopupSpan private constructor(private val resNumber: Int) : ClickableSpan(
         val rv = findParentRecyclerView(widget) ?: return
         val adapter = rv.adapter as? SupportAdapter ?: return
         val view = adapter.createViewForPopupWindow(resNumber, rv) ?: return
-        val bg = c.getDrawable(R.drawable.bbs_message_popup_bg)
+        val bg = c.getDrawable(R.drawable.frame_bg_blue)
 
         PopupWindow(
             view, rv.width,

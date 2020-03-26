@@ -17,11 +17,11 @@ import androidx.media.AudioManagerCompat
 import com.github.t_yoshi.vlcext.VLCLogger
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
+import org.peercast.core.lib.JsonRpcException
 import org.peercast.core.lib.LibPeerCast
 import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.PeerCastRpcClient
 import org.peercast.core.lib.rpc.ConnectionStatus
-import org.peercast.core.lib.rpc.JsonRpcException
 import org.peercast.pecaviewer.AppPreference
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.MediaPlayer
@@ -89,7 +89,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
         PeerCastController.from(this).also {
             if (it.isInstalled) {
-                it.addEventListener(pecaEventHandler)
+                it.eventListener = pecaEventHandler
                 peerCastController = it
             }
         }
@@ -215,7 +215,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             }
         }
 
-        override fun onDisconnectService(controller: PeerCastController) {
+        override fun onDisconnectService() {
             j?.cancel()
         }
     }
@@ -272,7 +272,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         job.cancel()
         VLCLogger.unregister(libVLC)
         peerCastController?.let {
-            pecaEventHandler.onDisconnectService(it)
+            pecaEventHandler.onDisconnectService()
             it.unbindService()
         }
 

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+
+        <variable
+                name="vm"
+                type="ThumbnailViewModel" />
+
+        <import type="org.peercast.pecaviewer.chat.adapter.ThumbnailViewModel" />
+        <import type="android.view.View" />
+    </data>
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:onClick="@{() -> vm.clickListener.run()}">
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="2dp"
+                android:background="@{vm.isYouTube ? @drawable/frame_bg_red: @drawable/frame_bg_blue}"
+                android:padding="3dp">
+
+            <ImageView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:scaleType="fitCenter"
+                    android:src="@{vm.image}" />
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|right"
+                    android:background="@color/grey_200"
+                    android:padding="1dp"
+                    android:text="@{vm.description}"
+                    android:textColor="@color/grey_800"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:visibility="@{vm.description.empty ? View.INVISIBLE : View.VISIBLE}" />
+
+            <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|right"
+                    android:src="@drawable/ic_launch_black_12dp"
+                    android:visibility="@{vm.isYouTube &amp;&amp; vm.description.empty ? View.VISIBLE : View.INVISIBLE}" />
+
+        </FrameLayout>
+    </FrameLayout>
+</layout>

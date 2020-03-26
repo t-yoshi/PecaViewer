@@ -5,11 +5,11 @@ import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import androidx.annotation.MainThread
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.android.synthetic.main.bbs_message_item_simple.view.*
 import org.peercast.pecaviewer.BR
-import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.net2.IBrowsable
 import org.peercast.pecaviewer.chat.net2.IMessage
 import org.peercast.pecaviewer.chat.net2.PostMessage
@@ -24,7 +24,7 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
     PopupSpan.SupportAdapter {
 
     private var itemsOrigin = emptyList<IMessage>()
-    private var itemsHolder = object : ItemsHolder<IMessage>(){
+    private var itemsHolder = object : ItemsHolder<IMessage>() {
         override fun areContentsTheSame(oldItem: IMessage, newItem: IMessage): Boolean {
             //"n分前"の表示は更新したい
             if (defaultViewType == SIMPLE)
@@ -42,19 +42,25 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
     //前回最後尾のurl
     private var prevLastItem: String? = null
 
-    fun setItems(newItems: List<IMessage>) {
+    @MainThread
+    suspend fun setItems(newItems: List<IMessage>) {
+        val items = newItems.toMutableList()
         if (prevLastItem == null || itemsOrigin != newItems)
             prevLastItem = (itemsOrigin.lastOrNull() as? IBrowsable)?.url
-
+        val threadChanged = newItems.firstOrNull()?.threadInfo !=
+                itemsOrigin.firstOrNull()?.threadInfo
         itemsOrigin = newItems
 
-        val items = newItems.toMutableList()
         //前回の最後尾にスペーサーを入れる
         when (val i = items.indexOfLast { (it as? IBrowsable)?.url == prevLastItem }) {
             -1 -> items.add(ITEM_SPACER)
             else -> items.add(i + 1, ITEM_SPACER)
         }
-        itemsHolder.update(items, this)
+
+        if (threadChanged)
+            itemsHolder.clear(this)
+
+        itemsHolder.asyncUpdate(items, this)
     }
 
     /**簡易表示、または詳細表示。*/
@@ -65,7 +71,7 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
             notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int):  ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return ViewHolder(
             DATA_BINDING_INFLATES[viewType](inflater, parent, false)
@@ -78,8 +84,8 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
         init {
             if (!binding.setVariable(BR.viewModel, viewModel))
                 throw RuntimeException("Nothing defined viewModel in layout.")
-            itemView.findViewById<TextView?>(R.id.vBody)?.movementMethod =
-                LinkMovementMethod.getInstance()
+            itemView.vBody?.movementMethod = LinkMovementMethod.getInstance()
+            itemView.vThumbnail?.adapter = ThumbnailAdapter()
         }
     }
 
@@ -112,11 +118,11 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
         holder.binding.executePendingBindings()
     }
 
-    fun saveInstanceState(outState: Bundle){
+    fun saveInstanceState(outState: Bundle) {
         outState.putString(STATE_LAST_ITEM_URL, prevLastItem)
     }
 
-    fun restoreInstanceState(inState: Bundle){
+    fun restoreInstanceState(inState: Bundle) {
         prevLastItem = inState.getString(STATE_LAST_ITEM_URL)
     }
 
@@ -137,10 +143,10 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
             BbsMessageItemSeparatorBinding::inflate
         )
 
-        private const val STATE_LAST_ITEM_URL = "org.peercast.pecaviewer.chat.adapter.MessageAdapter#LAST_ITEM_URL"
+        private const val STATE_LAST_ITEM_URL =
+            "org.peercast.pecaviewer.chat.adapter.MessageAdapter#LAST_ITEM_URL"
     }
 }
 
-private typealias ViewDataBinding_inflate  = (LayoutInflater, ViewGroup, Boolean)->ViewDataBinding
-
+private typealias ViewDataBinding_inflate = (LayoutInflater, ViewGroup, Boolean) -> ViewDataBinding
 

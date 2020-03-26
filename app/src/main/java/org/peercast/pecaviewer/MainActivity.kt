@@ -247,17 +247,25 @@ class MainActivity : AppCompatActivity(),
         service = null
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(STATE_PLAYING, playerViewModel.isPlaying.value ?: true)
+    }
+
+    override fun onBackPressed() {
+        if (chatViewModel.isThreadListVisible.value == true){
+            chatViewModel.isThreadListVisible.value = false
+            return
+        }
+        super.onBackPressed()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()
         unregisterReceiver(receiver)
         if (service != null)
             IPlayerService.unbind(this, this)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putBoolean(STATE_PLAYING, playerViewModel.isPlaying.value ?: true)
     }
 
     companion object {

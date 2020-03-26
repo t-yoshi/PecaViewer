@@ -36,9 +36,9 @@ class DefaultSquareHolder(private val a: Application) : ISquareHolder {
         .readTimeout(HTTP_RW_TIMEOUT, TimeUnit.SECONDS)
         .writeTimeout(HTTP_RW_TIMEOUT, TimeUnit.SECONDS)
 
-        .also {
+        .also { b->
             if (BuildConfig.DEBUG) {
-                it.addNetworkInterceptor(HttpLoggingInterceptor().also {
+                b.addNetworkInterceptor(HttpLoggingInterceptor().also {
                     it.level = HttpLoggingInterceptor.Level.HEADERS
                 })
             }

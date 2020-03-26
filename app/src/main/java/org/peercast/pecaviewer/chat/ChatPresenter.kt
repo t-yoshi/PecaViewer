@@ -124,6 +124,8 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
             boardConn = threadConn
             reloadThread()
 
+            chatViewModel.isThreadListVisible.postValue(false)
+
         } catch (e: IOException) {
             postSnackErrorMessage(e)
         }

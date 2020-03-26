@@ -135,7 +135,7 @@ abstract class BaseBbsThreadInfo(
 }
 
 open class BbsMessage(
-    val threadInfo: IThreadInfo,
+    final override val threadInfo: IThreadInfo,
     final override val number: Int,
     final override val name: CharSequence,
     final override val mail: CharSequence,

@@ -21,6 +21,9 @@ interface IThreadInfo : IBoardInfo {
 }
 
 interface IMessage {
+    /**スレッド*/
+    val threadInfo: IThreadInfo?
+
     /**レス番号*/
     val number: Int
 
@@ -46,6 +49,7 @@ data class PostMessage(
     override val mail: String,
     override val body: String
 ) : IMessage {
+    override val threadInfo: IThreadInfo? = null
     override val number: Int = 0
     override val date: String = ""
     override val id: String = ""
