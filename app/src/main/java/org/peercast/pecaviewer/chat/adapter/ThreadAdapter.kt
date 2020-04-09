@@ -33,7 +33,7 @@ class ThreadAdapter : RecyclerView.Adapter<ThreadAdapter.ViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val binding = BbsThreadItemBinding.inflate(inflater, parent, false)
-        return ViewHolder(            binding        )
+        return ViewHolder(binding)
     }
 
     override fun getItemCount() = items.size

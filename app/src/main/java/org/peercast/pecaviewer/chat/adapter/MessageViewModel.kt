@@ -59,13 +59,9 @@ class MessageViewModel {
         }.let(thumbnails_::addAll)
 
 /*
-
-        (1..m.number % 5).forEach {
-            thumbnails_.add(Uri.parse("https://i.imgur.com/hJCEq8P.jpg"))
-        }
-        (1..m.number % 5).forEach {
-            thumbnails_.add(Uri.parse("https://www.youtube.com/watch?v=rTSFxx76P0A"))
-        }
+        thumbnails_.add(Uri.parse("https://www.nicovideo.jp/watch/sm6116565"))
+        thumbnails_.add(Uri.parse("https://i.imgur.com/hJCEq8P.jpg"))
+        thumbnails_.add(Uri.parse("https://www.youtube.com/watch?v=rTSFxx76P0A"))
 // */
 
         thumbnails.set(thumbnails_)

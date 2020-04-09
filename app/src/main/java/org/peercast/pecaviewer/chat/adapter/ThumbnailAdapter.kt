@@ -28,14 +28,19 @@ class ThumbnailAdapter : RecyclerView.Adapter<ThumbnailAdapter.ViewHolder>() {
         }
 
         fun bind(u: Uri) {
-            val ytThumbnail = u.asYouTubeThumbnail()
-            val presenter = if (ytThumbnail != Uri.EMPTY) {
-                ThumbnailViewModel.YouTubePresenter(viewModel, u, ytThumbnail)
-            } else {
-                val weakItemView = WeakReference(itemView)
-                ThumbnailViewModel.DefaultPresenter(viewModel, u) { bm ->
-                    weakItemView.get()?.let {
-                        showPopupWindow(it, bm)
+            val presenter = when {
+                anyFound(u, RE_YOUTUBE_URL_1, RE_YOUTUBE_URL_2) -> {
+                    ThumbnailViewModel.YouTubePresenter(viewModel, u, u.toYouTubeThumbnail())
+                }
+                anyFound(u, RE_NICO_URL) -> {
+                    ThumbnailViewModel.NicoPresenter(viewModel, u, u.toNicoVideoId())
+                }
+                else -> {
+                    val weakItemView = WeakReference(itemView)
+                    ThumbnailViewModel.DefaultPresenter(viewModel, u) { bm ->
+                        weakItemView.get()?.let {
+                            showPopupWindow(it, bm)
+                        }
                     }
                 }
             }
@@ -79,24 +84,36 @@ class ThumbnailAdapter : RecyclerView.Adapter<ThumbnailAdapter.ViewHolder>() {
 
 
     companion object {
-        private fun Uri.asYouTubeThumbnail(): Uri {
+        private fun Uri.toYouTubeThumbnail(): Uri {
             val u = this.toString()
             val g = RE_YOUTUBE_URL_1.find(u)?.groupValues
                 ?: RE_YOUTUBE_URL_2.find(u)?.groupValues
-            if (g != null) {
-                return Uri.parse("http://i.ytimg.com/vi/${g[1]}/default.jpg")
-            }
-            return Uri.EMPTY
+                ?: throw IllegalArgumentException("not youtube url: $u")
+            return Uri.parse("http://i.ytimg.com/vi/${g[1]}/default.jpg")
+        }
+
+        private fun Uri.toNicoVideoId(): String {
+            val u = this.toString()
+            val g = RE_NICO_URL.find(u)?.groupValues
+                ?: throw IllegalArgumentException("not niconico url: $u")
+            return g[2]
         }
 
         fun isImageUrl(u: Uri): Boolean {
-            return sequenceOf(
+            return anyFound(
+                u,
                 RE_YOUTUBE_URL_1,
                 RE_YOUTUBE_URL_2,
+                RE_NICO_URL,
                 RE_IMGUR_URL,
-                RE_IMAGE_URL
-            ).any {
-                it.find(u.toString()) != null
+                RE_GENERAL_IMAGE_URL
+            )
+        }
+
+        private fun anyFound(u: Uri, vararg re: Regex): Boolean {
+            val u_ = u.toString()
+            return re.asSequence().any {
+                it.find(u_) != null
             }
         }
 
@@ -105,14 +122,13 @@ class ThumbnailAdapter : RecyclerView.Adapter<ThumbnailAdapter.ViewHolder>() {
         private val RE_YOUTUBE_URL_2 =
             """^https?://youtu\.be/([\w_\-]+)""".toRegex()
 
+        private val RE_NICO_URL =
+            """^https?://(www\.nicovideo\.jp/watch|nico\.ms)/((sm|nm|)(\d{1,10}))\b""".toRegex()
+
         private val RE_IMGUR_URL =
             """^https?://[\w.]+\.imgur\.com/(\w+)(_d)?(\.(png|jpe?g|gif))?""".toRegex(RegexOption.IGNORE_CASE)
-//            RE_IMGUR.find(u.toString())?.groupValues?.let { g ->
-//                return Uri.parse("https://i.imgur.com/${g[1]}_d.${g[4]}?maxwidth=64")
-//            }
 
-
-        private val RE_IMAGE_URL =
+        private val RE_GENERAL_IMAGE_URL =
             """^https?://.+\.(png|jpe?g|gif)\b""".toRegex()
 
     }
