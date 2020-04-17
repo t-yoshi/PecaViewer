@@ -2,9 +2,10 @@ package org.peercast.pecaviewer.service2
 
 import androidx.lifecycle.MutableLiveData
 import com.github.t_yoshi.vlcext.VLCLogMessage
-import kotlinx.coroutines.*
+import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.core.lib.rpc.ChannelInfo
 import org.videolan.libvlc.MediaPlayer
+import java.util.*
 
 
 class PlayerServiceEventLiveData : MutableLiveData<PlayerServiceEvent>() {
@@ -16,18 +17,6 @@ class PlayerServiceEventLiveData : MutableLiveData<PlayerServiceEvent>() {
     @Deprecated("")
     override fun postValue(value: PlayerServiceEvent?) {
         super.postValue(value)
-    }
-
-    suspend fun post(value: PlayerServiceEvent?) {
-        withContext(Dispatchers.Main) {
-            setValue(value)
-        }
-    }
-
-    fun post(cs: CoroutineScope, value: PlayerServiceEvent?): Job {
-        return cs.launch(Dispatchers.Main) {
-            setValue(value)
-        }
     }
 }
 
@@ -47,6 +36,10 @@ data class PeerCastChannelEvent(
 
     constructor(ch: ChannelInfo) : this(ch.name, ch.url, ch.desc, ch.comment)
 }
+
+data class PeerCastNotifyMessageEvent(
+    val types: EnumSet<NotifyMessageType>, val message: String
+) : PlayerServiceEvent()
 
 data class VLCLogEvent(val log: VLCLogMessage) : PlayerServiceEvent()
 

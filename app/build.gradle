@@ -10,8 +10,8 @@ android {
         applicationId "org.peercast.pecaviewer"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 7_01_00_00
-        versionName "7.1.0-00"
+        versionCode 7_01_00_01
+        versionName "7.1.0-01"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     dataBinding {
@@ -87,7 +87,7 @@ dependencies {
     implementation "com.squareup.moshi:moshi:1.9.2"
     kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.9.2'
 
-    implementation 'com.github.t-yoshi:peca-android:3.1.0-00'
+    implementation 'com.github.t-yoshi:peca-android:3.1.1-01'
 
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
 
@@ -101,7 +101,7 @@ dependencies {
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0-alpha04'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0-alpha05'
 }
 
 apply plugin: 'com.google.gms.google-services'

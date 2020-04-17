@@ -21,12 +21,16 @@ import org.peercast.core.lib.JsonRpcException
 import org.peercast.core.lib.LibPeerCast
 import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.PeerCastRpcClient
+import org.peercast.core.lib.notify.NotifyChannelType
+import org.peercast.core.lib.notify.NotifyMessageType
+import org.peercast.core.lib.rpc.ChannelInfo
 import org.peercast.core.lib.rpc.ConnectionStatus
 import org.peercast.pecaviewer.AppPreference
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.util.VLCVideoLayout
 import timber.log.Timber
+import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.properties.Delegates
 
@@ -95,7 +99,9 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         }
         VLCLogger.register(libVLC) { log ->
             Timber.d("$log")
-            eventLiveData.post(this@PecaViewerService, VLCLogEvent(log))
+            launch(Dispatchers.Main) {
+                eventLiveData.value = VLCLogEvent(log)
+            }
         }
         registerReceiver(receiver, IntentFilter().also {
             it.addAction(ACTION_PLAY)
@@ -204,7 +210,9 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
                                 ConnectionStatus.RECEIVE
                             ) && playingUrl.path?.contains(ch.channelId) == true
                         }?.let { ch ->
-                            eventLiveData.post(PeerCastChannelEvent(ch.info))
+                            launch (Dispatchers.Main){
+                                eventLiveData.value = PeerCastChannelEvent(ch.info)
+                            }
                         }
                     } catch (e: JsonRpcException) {
                         Timber.e(e)
@@ -213,6 +221,18 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
                     delay(30_000)
                 }
             }
+        }
+
+        override fun onNotifyChannel(
+            type: NotifyChannelType,
+            channelId: String,
+            channelInfo: ChannelInfo
+        ) {
+            //eventLiveData.value = PeerCastChannelEvent(channelInfo)
+        }
+
+        override fun onNotifyMessage(types: EnumSet<NotifyMessageType>, message: String) {
+            eventLiveData.value = PeerCastNotifyMessageEvent(types, message)
         }
 
         override fun onDisconnectService() {
@@ -228,7 +248,9 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
 
     private val mediaPlayerEventListener = MediaPlayer.EventListener { ev ->
-        eventLiveData.post(this, MediaPlayerEvent(ev, player.isPlaying))
+        launch (Dispatchers.Main){
+            eventLiveData.value = MediaPlayerEvent(ev, player.isPlaying)
+        }
         when (ev.type) {
             MediaPlayer.Event.Paused,
             MediaPlayer.Event.Stopped ->

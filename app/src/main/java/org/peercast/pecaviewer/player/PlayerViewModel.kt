@@ -8,10 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.core.KoinComponent
 import org.koin.core.inject
-import org.peercast.pecaviewer.service2.MediaPlayerEvent
-import org.peercast.pecaviewer.service2.PeerCastChannelEvent
-import org.peercast.pecaviewer.service2.PlayerServiceEventLiveData
-import org.peercast.pecaviewer.service2.VLCLogEvent
+import org.peercast.pecaviewer.service2.*
 import org.videolan.libvlc.MediaPlayer
 
 
@@ -75,13 +72,18 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
     /**ステータス。配信時間など*/
     val channelStatus: LiveData<CharSequence> = MediatorLiveData<CharSequence>().also { ld ->
         ld.addSource(eventLiveData) { ev ->
-            if (ev is MediaPlayerEvent) {
-                when (ev.ev.type) {
-                    MediaPlayer.Event.TimeChanged -> {
-                        val t = ev.ev.timeChanged / 1000
-                        ld.value =
-                            "%d:%02d:%02d".format(t / 60 / 60, t / 60 % 60, t % 60)
+            when (ev){
+                is MediaPlayerEvent->{
+                    when (ev.ev.type) {
+                        MediaPlayer.Event.TimeChanged -> {
+                            val t = ev.ev.timeChanged / 1000
+                            ld.value =
+                                "%d:%02d:%02d".format(t / 60 / 60, t / 60 % 60, t % 60)
+                        }
                     }
+                }
+                is PeerCastNotifyMessageEvent ->{
+                    ld.value = ev.message
                 }
             }
         }
