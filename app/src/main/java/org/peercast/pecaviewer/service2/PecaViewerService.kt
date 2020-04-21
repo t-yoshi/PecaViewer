@@ -17,7 +17,6 @@ import androidx.media.AudioManagerCompat
 import com.github.t_yoshi.vlcext.VLCLogger
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
-import org.peercast.core.lib.JsonRpcException
 import org.peercast.core.lib.LibPeerCast
 import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.PeerCastRpcClient
@@ -30,6 +29,7 @@ import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.util.VLCVideoLayout
 import timber.log.Timber
+import java.io.IOException
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.properties.Delegates
@@ -121,23 +121,6 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Timber.d("onStartCommand($intent)")
-        when (intent?.action) {
-            ACTION_PLAY -> play()
-            ACTION_PAUSE -> pause()
-            ACTION_STOP -> {
-                stop()
-            }
-            else -> {
-                return super.onStartCommand(intent, flags, startId)
-            }
-        }
-        // ACTION_PLAY,... の場合、stopSelfする
-        stopSelf(startId)
-        return START_NOT_STICKY
-    }
-
     private val audioFocusRequest = AudioFocusRequestCompat.Builder(
             AudioManagerCompat.AUDIOFOCUS_GAIN
         )
@@ -200,6 +183,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         private var j: Job? = null
 
         override fun onConnectService(controller: PeerCastController) {
+            //Timber.d("onConnectService $controller")
             val rpcClient = PeerCastRpcClient(controller)
             j = launch {
                 while (isActive) {
@@ -214,7 +198,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
                                 eventLiveData.value = PeerCastChannelEvent(ch.info)
                             }
                         }
-                    } catch (e: JsonRpcException) {
+                    } catch (e: IOException) {
                         Timber.e(e)
                         break
                     }
@@ -228,10 +212,14 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             channelId: String,
             channelInfo: ChannelInfo
         ) {
-            //eventLiveData.value = PeerCastChannelEvent(channelInfo)
+            Timber.d("onNotifyChannel: $type $channelId $channelInfo")
+            if (playingUrl.path?.contains(channelId) == true) {
+                eventLiveData.value = PeerCastChannelEvent(channelInfo)
+            }
         }
 
         override fun onNotifyMessage(types: EnumSet<NotifyMessageType>, message: String) {
+            Timber.d("onNotifyMessage: $types $message")
             eventLiveData.value = PeerCastNotifyMessageEvent(types, message)
         }
 

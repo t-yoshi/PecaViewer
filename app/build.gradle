@@ -10,8 +10,8 @@ android {
         applicationId "org.peercast.pecaviewer"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 7_01_00_02
-        versionName "7.1.0-02"
+        versionCode 7_01_00_03
+        versionName "7.1.0-03"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     dataBinding {
