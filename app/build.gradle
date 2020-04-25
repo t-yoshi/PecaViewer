@@ -10,8 +10,8 @@ android {
         applicationId "org.peercast.pecaviewer"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 7_01_00_03
-        versionName "7.1.0-03"
+        versionCode 7_01_01_00
+        versionName "7.1.1-00"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     dataBinding {
@@ -87,7 +87,7 @@ dependencies {
     implementation "com.squareup.moshi:moshi:1.9.2"
     kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.9.2'
 
-    implementation 'com.github.t-yoshi:peca-android:3.1.1-03'
+    implementation 'com.github.t-yoshi:peca-android:d242213f7e'
 
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
 

@@ -15,21 +15,21 @@ import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.github.t_yoshi.vlcext.VLCLogger
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.peercast.core.lib.LibPeerCast
 import org.peercast.core.lib.PeerCastController
-import org.peercast.core.lib.PeerCastRpcClient
 import org.peercast.core.lib.notify.NotifyChannelType
 import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.core.lib.rpc.ChannelInfo
-import org.peercast.core.lib.rpc.ConnectionStatus
 import org.peercast.pecaviewer.AppPreference
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.util.VLCVideoLayout
 import timber.log.Timber
-import java.io.IOException
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.properties.Delegates
@@ -98,7 +98,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             }
         }
         VLCLogger.register(libVLC) { log ->
-            Timber.d("$log")
+            //Timber.d("$log")
             launch(Dispatchers.Main) {
                 eventLiveData.value = VLCLogEvent(log)
             }
@@ -180,31 +180,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     }
 
     private val pecaEventHandler = object : PeerCastController.EventListener {
-        private var j: Job? = null
-
         override fun onConnectService(controller: PeerCastController) {
-            //Timber.d("onConnectService $controller")
-            val rpcClient = PeerCastRpcClient(controller)
-            j = launch {
-                while (isActive) {
-                    try {
-                        rpcClient.getChannels().firstOrNull { ch ->
-                            ch.status.status in listOf(
-                                ConnectionStatus.Receiving,
-                                ConnectionStatus.RECEIVE
-                            ) && playingUrl.path?.contains(ch.channelId) == true
-                        }?.let { ch ->
-                            launch (Dispatchers.Main){
-                                eventLiveData.value = PeerCastChannelEvent(ch.info)
-                            }
-                        }
-                    } catch (e: IOException) {
-                        Timber.e(e)
-                        break
-                    }
-                    delay(30_000)
-                }
-            }
         }
 
         override fun onNotifyChannel(
@@ -224,7 +200,6 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         }
 
         override fun onDisconnectService() {
-            j?.cancel()
         }
     }
 

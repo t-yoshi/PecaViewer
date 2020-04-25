@@ -83,10 +83,7 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
                         }
                     }
                 }
-                is PeerCastNotifyMessageEvent ->{
-                    ld.value = ev.message
-                }
-            }
+             }
         }
     }
 
@@ -113,6 +110,9 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
                         ld.value = log.msg
                         //Timber.w("-> $log")
                     }
+                }
+                is PeerCastNotifyMessageEvent ->{
+                    ld.value = ev.message
                 }
                 is MediaPlayerEvent -> {
                     when (ev.ev.type) {
