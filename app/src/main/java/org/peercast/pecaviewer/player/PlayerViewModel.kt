@@ -8,6 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.core.KoinComponent
 import org.koin.core.inject
+import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.service2.*
 import org.videolan.libvlc.MediaPlayer
 
@@ -116,7 +117,7 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
                 is MediaPlayerEvent -> {
                     when (ev.ev.type) {
                         MediaPlayer.Event.Buffering -> {
-                            ld.value = "Buffering.. %.1f%%".format(ev.ev.buffering)
+                            ld.value = a.getString(R.string.buffering, ev.ev.buffering)
                         }
                     }
                 }

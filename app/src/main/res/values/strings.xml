@@ -11,5 +11,6 @@
     <string name="et_days_fmt"> %dd</string>
     <string name="et_years_fmt"> %dy</string>
 
-    <string name="sending">Sending...</string>
+    <string name="sending">Sending…</string>
+    <string name="buffering">Buffering… %.1f%%</string>
 </resources>
