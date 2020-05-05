@@ -4,6 +4,7 @@ package org.peercast.pecaviewer.chat.net2
 import okhttp3.CacheControl
 import okhttp3.FormBody
 import okhttp3.Request
+import timber.log.Timber
 import java.io.IOException
 import java.net.URLEncoder
 import java.nio.charset.Charset
@@ -67,9 +68,11 @@ private class ShitarabaBoardConnection(
         return threads
     }
 
-    override suspend fun openThreadConnection(threadInfo: IThreadInfo): IBoardThreadConnection {
-        if (threadInfo !is ShitarabaThreadInfo || threadInfo.board != info)
-            throw IllegalArgumentException("wrong threadInfo: $threadInfo but board=$info")
+    override suspend fun openThreadConnection(threadInfo: IThreadInfo): IBoardThreadConnection? {
+        if (threadInfo !is ShitarabaThreadInfo || threadInfo.board != info) {
+            Timber.w("wrong threadInfo: $threadInfo but board=$info")
+            return null
+        }
         return ShitarabaBoardThreadConnection(this, threadInfo)
     }
 

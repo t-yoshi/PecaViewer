@@ -65,10 +65,10 @@ interface IBoardConnection {
     suspend fun loadThreads(): List<IThreadInfo>
 
     /**掲示板スレッドへの接続を開く
-     * @throws IllegalArgumentException 適切なthreadInfoでない
+     * @return null 適切なthreadInfoでない
      * @throws java.io.IOException
      * */
-    suspend fun openThreadConnection(threadInfo: IThreadInfo): IBoardThreadConnection
+    suspend fun openThreadConnection(threadInfo: IThreadInfo): IBoardThreadConnection?
 }
 
 /**掲示板スレッドへの書き込み*/

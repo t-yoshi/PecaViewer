@@ -42,9 +42,11 @@ private class ZeroChannelBoardConnection(
         }
     }
 
-    override suspend fun openThreadConnection(threadInfo: IThreadInfo): IBoardThreadConnection {
-        if (threadInfo !is ZeroChannelThreadInfo || threadInfo.board != info)
-            throw IllegalArgumentException("wrong threadInfo: $threadInfo")
+    override suspend fun openThreadConnection(threadInfo: IThreadInfo): IBoardThreadConnection? {
+        if (threadInfo !is ZeroChannelThreadInfo || threadInfo.board != info) {
+            Timber.w("wrong threadInfo: $threadInfo")
+            return null
+        }
         return ZeroChannelBoardThreadConnection(this, threadInfo)
     }
 
