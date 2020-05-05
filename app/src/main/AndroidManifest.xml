@@ -1,38 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-          package="org.peercast.pecaviewer">
+        xmlns:tools="http://schemas.android.com/tools"
+        package="org.peercast.pecaviewer">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
             android:name=".PecaViewerApplication"
             android:allowBackup="true"
             android:fullBackupContent="false"
+            android:icon="@drawable/ic_launcher"
             android:label="PecaViewer"
             android:supportsRtl="false"
+            android:theme="@style/AppTheme.NoActionBar"
             android:usesCleartextTraffic="true"
-            android:icon="@drawable/ic_launcher"
             tools:ignore="GoogleAppIndexingWarning">
 
         <activity
                 android:name=".MainActivity"
-                android:windowSoftInputMode="adjustPan"
-                android:theme="@style/AppTheme.NoActionBar"
+                android:exported="true"
                 android:taskAffinity="org.peercast.pecaplay"
-                android:exported="true"/>
+                android:windowSoftInputMode="adjustPan" />
 
-        <service android:name=".service2.PecaViewerService" android:exported="false"/>
+        <service
+                android:name=".service2.PecaViewerService"
+                android:exported="false" />
 
         <provider
                 android:name="androidx.core.content.FileProvider"
                 android:authorities="org.peercast.pecaviewer.fileprovider"
-                android:grantUriPermissions="true"
-                android:exported="false">
+                android:exported="false"
+                android:grantUriPermissions="true">
             <meta-data
                     android:name="android.support.FILE_PROVIDER_PATHS"
-                    android:resource="@xml/fileprovider_paths"/>
+                    android:resource="@xml/fileprovider_paths" />
         </provider>
 
     </application>
