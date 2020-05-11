@@ -3,6 +3,7 @@ package org.peercast.pecaviewer
 import android.app.Application
 import android.util.Log
 import com.crashlytics.android.Crashlytics
+import com.google.android.play.core.missingsplits.MissingSplitsManagerFactory
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -27,10 +28,16 @@ private val appModule = module {
     single{ PlayerServiceEventLiveData() }
 }
 
+@Suppress("unused")
 class PecaViewerApplication : Application() {
     private lateinit var koinApp: KoinApplication
 
     override fun onCreate() {
+        //不完全なapkをサイドローディングインストールしたユーザーに警告する
+        if (MissingSplitsManagerFactory.create(this).disableAppIfMissingRequiredSplits()) {
+            return
+        }
+
         super.onCreate()
 
         Timber.plant(ReleaseTree())
