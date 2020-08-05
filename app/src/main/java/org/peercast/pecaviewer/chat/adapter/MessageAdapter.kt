@@ -45,8 +45,6 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
     @MainThread
     suspend fun setItems(newItems: List<IMessage>) {
         val items = newItems.toMutableList()
-        if (prevLastItem == null || itemsOrigin != newItems)
-            prevLastItem = (itemsOrigin.lastOrNull() as? IBrowsable)?.url
         val threadChanged = newItems.firstOrNull()?.threadInfo !=
                 itemsOrigin.firstOrNull()?.threadInfo
         itemsOrigin = newItems
@@ -61,6 +59,11 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
             itemsHolder.clear(this)
 
         itemsHolder.asyncUpdate(items, this)
+    }
+
+    /**全て既読のフラグ*/
+    fun markAlreadyAllRead(){
+        prevLastItem = (itemsOrigin.lastOrNull() as? IBrowsable)?.url
     }
 
     /**簡易表示、または詳細表示。*/

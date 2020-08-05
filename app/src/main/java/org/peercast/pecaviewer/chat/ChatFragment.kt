@@ -18,15 +18,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.peercast.pecaviewer.AppPreference
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
 import org.peercast.pecaviewer.chat.adapter.ThreadAdapter
 import org.peercast.pecaviewer.databinding.FragmentChatBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
+import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
-
+@Suppress("unused")
 class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener {
 
     private val job = Job()
@@ -35,9 +38,11 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
 
     private val chatViewModel by sharedViewModel<ChatViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
+    private val appPrefs by inject<AppPreference>()
 
     private val threadAdapter = ThreadAdapter()
     private val messageAdapter = MessageAdapter()
+    private var isAlreadyRead = true //既読
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -48,6 +53,11 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
             it.viewModel = chatViewModel
             it.lifecycleOwner = viewLifecycleOwner
         }.root
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        chatViewModel.presenter.autoReloadThreadSec = 90
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -75,12 +85,23 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         vMessageList.setOnClickListener {
             chatViewModel.isToolbarVisible.value = true
         }
+        vMessageList.addOnScrollListener(object : RecyclerView.OnScrollListener(){
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                if (!recyclerView.canScrollVertically(1) && newState == RecyclerView.SCROLL_STATE_IDLE){
+                    //最後までスクロールしたらすべて既読とみなす
+                    Timber.d("AlreadyRead!")
+                    isAlreadyRead = true
+                }
+            }
+        })
+
         vThreadListRefresh.setOnRefreshListener {
             launch {
                 chatViewModel.presenter.reload()
             }
         }
         vMessageListRefresh.setOnRefreshListener {
+            isAlreadyRead = true
             launch {
                 chatViewModel.presenter.reloadThread()
             }
@@ -104,9 +125,14 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
             threadAdapter.selected = it
         })
         chatViewModel.messageLiveData.observe(viewLifecycleOwner, Observer {
+            val b = isAlreadyRead
+            if (b)
+                messageAdapter.markAlreadyAllRead()
+            isAlreadyRead = false
             launch {
                 messageAdapter.setItems(it)
-                scrollToBottom()
+                if (b)
+                    scrollToBottom()
             }
         })
 
@@ -148,6 +174,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_reload -> {
+                isAlreadyRead = true
                 launch {
                     when (chatViewModel.isThreadListVisible.value) {
                         true -> chatViewModel.presenter.reload()
@@ -189,6 +216,10 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         job.cancel()
     }
 
+
+    companion object {
+        private const val AUTO_RELOAD_SEC = 120
+    }
 }
 
 

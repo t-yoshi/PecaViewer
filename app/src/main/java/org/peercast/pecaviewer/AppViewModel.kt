@@ -28,7 +28,7 @@ class AppViewModel(
         val o = Observer<Any> {
             ld.value = playerViewModel.isFullScreenMode.value == true &&
                     playerViewModel.isControlsViewVisible.value != true &&
-                    slidingPanelState.value == 0
+                    slidingPanelState.value == 0 // EXPANDED
         }
         ld.addSource(playerViewModel.isFullScreenMode, o)
         ld.addSource(playerViewModel.isControlsViewVisible, o)

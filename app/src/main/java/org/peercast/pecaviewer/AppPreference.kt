@@ -72,6 +72,8 @@ class AppPreference(a: Application) {
             }
         }
 
+    /**スレを自動的にリロードするか*/
+    var isChatAutoReloadEnabled = true
 
     companion object {
         private const val KEY_INIT_SLIDING_PANEL_STATE = "key_sliding_panel_state"

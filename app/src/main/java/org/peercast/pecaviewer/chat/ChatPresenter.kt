@@ -6,6 +6,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.net2.*
@@ -21,6 +22,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     private var boardConn by Delegates.observable<IBoardConnection?>(null) { _, _, _ ->
         updateChatToolbarTitle()
     }
+    private var autoReloadJob: Job? = null
 
     //コンタクトURL。配信者が更新しないかぎり変わらない。
     private var contactUrl = ""
@@ -34,6 +36,13 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
      * スレッドのメッセージを再読込する。
      * */
     suspend fun reloadThread() {
+        autoReloadJob?.cancel()
+
+        if (chatViewModel.isMessageListRefreshing.value == true) {
+            Timber.w("already loading.")
+            return
+        }
+
         chatViewModel.isMessageListRefreshing.postValue(true)
         clearSnackMessage()
         try {
@@ -45,6 +54,17 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
                 val messages = conn.loadMessages()
                 if (true || messages != chatViewModel.messageLiveData.value) {
                     chatViewModel.messageLiveData.postValue(messages)
+
+                    val autoReloadSec = autoReloadThreadSec
+                    if (autoReloadSec > 0){
+                        autoReloadJob = chatViewModel.viewModelScope.launch {
+                            Timber.d("Set auto-reloading after ${autoReloadSec}seconds.")
+                            delay(autoReloadSec * 1000L)
+                            Timber.d("Start auto-reloading.")
+                            autoReloadJob = null
+                            reloadThread()
+                        }
+                    }
                 } else {
                     //postSnackMessage("have not changed.")
                 }
@@ -55,6 +75,11 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
             chatViewModel.isMessageListRefreshing.postValue(false)
         }
     }
+
+    /**
+     * n秒毎にスレッドを自動的に再読込する。n<=0無効。
+     * */
+    var autoReloadThreadSec: Int = 0
 
     /**
      * コンタクトURLを読込む。
