@@ -6,14 +6,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
+import android.view.animation.Transformation
+import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.core.view.marginRight
+import androidx.core.view.updateLayoutParams
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
 import org.koin.core.KoinComponent
 import org.peercast.pecaviewer.chat.adapter.ThumbnailAdapter
@@ -37,7 +42,7 @@ object AppBindAdapter : KoinComponent {
     @JvmStatic
     @BindingAdapter("thumbnailUrls")
     fun bindThumbnailUrls(view: RecyclerView, urls: List<Uri>) {
-        with(view.adapter as ThumbnailAdapter){
+        with(view.adapter as ThumbnailAdapter) {
             imageUrls = urls
             notifyDataSetChanged()
         }
@@ -84,6 +89,28 @@ object AppBindAdapter : KoinComponent {
                 view.startAnimation(a)
             }
         }
+    }
+
+    @JvmStatic
+    @BindingAdapter("postDialogButton_fullVisible")
+            /**false=右端に隠す*/
+    fun bindPostDialogButtonHide(view: FloatingActionButton, visibility: Boolean) {
+        val id = if (visibility) {
+            R.dimen.post_dialog_button_margin_right_normal
+        } else {
+            R.dimen.post_dialog_button_margin_right_hide
+        }
+        val anim = object : Animation() {
+            val start = view.marginRight
+            val end = view.context.resources.getDimension(id)
+            override fun applyTransformation(interpolatedTime: Float, t: Transformation?) {
+                view.updateLayoutParams<FrameLayout.LayoutParams> {
+                    rightMargin = (start + (end - start) * interpolatedTime).toInt()
+                }
+            }
+        }
+        anim.duration = 100
+        view.startAnimation(anim)
     }
 
 

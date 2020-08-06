@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.AppPreference
+import org.peercast.pecaviewer.AppViewModel
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
 import org.peercast.pecaviewer.chat.adapter.ThreadAdapter
@@ -38,6 +39,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
 
     private val chatViewModel by sharedViewModel<ChatViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
+    private val appViewModel by sharedViewModel<AppViewModel>()
     private val appPrefs by inject<AppPreference>()
 
     private val threadAdapter = ThreadAdapter()
@@ -85,12 +87,19 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         vMessageList.setOnClickListener {
             chatViewModel.isToolbarVisible.value = true
         }
-        vMessageList.addOnScrollListener(object : RecyclerView.OnScrollListener(){
+        vMessageList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                if (!recyclerView.canScrollVertically(1) && newState == RecyclerView.SCROLL_STATE_IDLE){
+                if (!recyclerView.canScrollVertically(1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
                     //最後までスクロールしたらすべて既読とみなす
                     Timber.d("AlreadyRead!")
                     isAlreadyRead = true
+                }
+                
+                if (recyclerView.context.resources.getBoolean(R.bool.isNarrowScreen)
+                    && newState != RecyclerView.SCROLL_STATE_IDLE
+                ) {
+                    //狭い画面ではスクロール中にFABを消す。そして数秒後に再表示される。
+                    appViewModel.isPostDialogButtonFullVisible.value = false
                 }
             }
         })
@@ -136,7 +145,10 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
             }
         })
 
-        chatViewModel.snackbarMessage.observe(owner, SnackbarObserver(view, activity?.vPostDialogButton))
+        chatViewModel.snackbarMessage.observe(
+            owner,
+            SnackbarObserver(view, activity?.vPostDialogButton)
+        )
 
         savedInstanceState?.let(messageAdapter::restoreInstanceState)
     }
@@ -152,7 +164,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
 
             val length = when {
                 msg.cancelJob != null -> Snackbar.LENGTH_INDEFINITE
-                else ->Snackbar.LENGTH_LONG
+                else -> Snackbar.LENGTH_LONG
             }
 
             bar = Snackbar.make(view, msg.text, length).also { bar ->
