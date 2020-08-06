@@ -1,2 +1,2 @@
 configurations.maybeCreate("default")
-artifacts.add("default", file('libvlc-all-3.2.4.aar'))
+artifacts.add("default", file('libvlc-all-3.2.6.aar'))
