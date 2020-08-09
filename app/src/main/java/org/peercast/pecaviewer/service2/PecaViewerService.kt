@@ -122,8 +122,8 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     }
 
     private val audioFocusRequest = AudioFocusRequestCompat.Builder(
-            AudioManagerCompat.AUDIOFOCUS_GAIN
-        )
+        AudioManagerCompat.AUDIOFOCUS_GAIN
+    )
         .setAudioAttributes(AA_MEDIA_MOVIE)
         .setOnAudioFocusChangeListener { focusChange ->
             if (player.isPlaying && focusChange != AudioManager.AUDIOFOCUS_GAIN) {
@@ -132,20 +132,19 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         }
         .build()
 
-    override fun prepareFromUri(uri: Uri, extras: Bundle?) {
-        extras?.let { b ->
-            /**PecaPlayからのインテントをもとにタイトル等を表示する。*/
-            val name = b.getString(LibPeerCast.EXTRA_NAME)
+    override fun prepareFromUri(uri: Uri, extras: Bundle) {
+        /**PecaPlayからのインテントをもとにタイトル等を表示する。*/
+        extras.let { b ->
+            val name = b.getString(LibPeerCast.EXTRA_NAME, "")
             val comment = b.getString(LibPeerCast.EXTRA_COMMENT, "")
             val desc = b.getString(LibPeerCast.EXTRA_DESCRIPTION, "")
             val contact = b.getString(LibPeerCast.EXTRA_CONTACT_URL, "")
 
-            Timber.d("name=$name, comment=$comment, desc=$desc, contact=$contact")
-            if (name != null) {
-                eventLiveData.value = PeerCastChannelEvent(name, contact, desc, comment)
-                notificationHelper.launchIntentExtras.putAll(b)
-            }
+            Timber.i("Channel info from PacaPlay's intent. [name=$name, comment=$comment, desc=$desc, contact=$contact]")
+            eventLiveData.value = PeerCastChannelEvent(name, contact, desc, comment)
+            notificationHelper.launchIntentExtras.putAll(b)
         }
+
         if (playingUrl != uri) {
             player.stop()
             notificationHelper.setDefaultThumbnail()
@@ -153,22 +152,24 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         }
     }
 
-    override fun playFromUri(uri: Uri, extras: Bundle?) {
+    override fun playFromUri(uri: Uri, extras: Bundle) {
         Timber.d("onPlayFromUri($uri)")
         if (player.isPlaying && uri == playingUrl)
             return
         prepareFromUri(uri, extras)
-
-        val r = AudioManagerCompat.requestAudioFocus(audioManager, audioFocusRequest)
-        if (r == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            player.play(uri)
-        } else {
-            Timber.w("audio focus not granted: $r")
-        }
+        play()
     }
 
     override fun play() {
-        playFromUri(playingUrl)
+        if (playingUrl == Uri.EMPTY || player.isPlaying)
+            return
+
+        val r = AudioManagerCompat.requestAudioFocus(audioManager, audioFocusRequest)
+        if (r == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            player.play(playingUrl)
+        } else {
+            Timber.w("audio focus not granted: $r")
+        }
     }
 
     override fun pause() {
@@ -211,7 +212,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
 
     private val mediaPlayerEventListener = MediaPlayer.EventListener { ev ->
-        launch (Dispatchers.Main){
+        launch(Dispatchers.Main) {
             eventLiveData.value = MediaPlayerEvent(ev, player.isPlaying)
         }
         when (ev.type) {

@@ -134,7 +134,7 @@ object ZeroChannelConnectionFactory : ConnectionFactory() {
     private val RE_URL_1 = """^(https?://.+/)test/read\.cgi/(\w+)/(\d+)/?""".toRegex()
 
     //[baseUrl, boardName]
-    private val RE_URL_2 = """^(https?://.+/)(?:[^/]+/)*(\w+)/$""".toRegex()
+    private val RE_URL_2 = """^(https?://.+/)(?:[^/]+/)*(\w+)/?$""".toRegex()
 
     //[baseUrl, boardName, threadNumber or ""]
     private fun parseUrl(url: String): List<String>? {

@@ -73,7 +73,13 @@ class AppPreference(a: Application) {
         }
 
     /**スレを自動的にリロードするか*/
-    var isChatAutoReloadEnabled = true
+    var isAutoReloadEnabled : Boolean
+        get() = prefs.getBoolean(KEY_AUTO_RELOAD, true)
+        set(value) {
+            prefs.edit {
+                putBoolean(KEY_AUTO_RELOAD, value)
+            }
+        }
 
     companion object {
         private const val KEY_INIT_SLIDING_PANEL_STATE = "key_sliding_panel_state"
@@ -81,5 +87,6 @@ class AppPreference(a: Application) {
         private const val KEY_BACKGROUND_PLAYING = "key_background_playing"
         private const val KEY_NIGHT_MODE = "key_night_mode"
         private const val KEY_FULLSCREEN_MODE = "key_fullscreen_mode"
+        private const val KEY_AUTO_RELOAD = "key_chat_auto_reload"
     }
 }

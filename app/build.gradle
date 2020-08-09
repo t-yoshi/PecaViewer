@@ -10,8 +10,8 @@ android {
         applicationId "org.peercast.pecaviewer"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 7_01_01_01
-        versionName "7.1.1-01"
+        versionCode 7_01_02_00
+        versionName "7.1.2-00"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     dataBinding {
@@ -82,8 +82,8 @@ dependencies {
 
     annotationProcessor 'androidx.databinding:databinding-compiler:4.0.1'
 
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.4.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.4.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.8.1'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.8.1'
     implementation "com.squareup.moshi:moshi:1.9.2"
     kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.9.2'
 

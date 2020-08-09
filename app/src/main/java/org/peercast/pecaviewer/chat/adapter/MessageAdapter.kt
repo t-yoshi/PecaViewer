@@ -55,6 +55,9 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
             else -> items.add(i + 1, ITEM_SPACER)
         }
 
+        if (prevLastItem == null)
+            markAlreadyAllRead()
+
         if (threadChanged)
             itemsHolder.clear(this)
 

@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity(),
         })
 
         onServiceConnect = {
-            it.prepareFromUri(intent.data ?: Uri.EMPTY, intent.extras)
+            it.prepareFromUri(intent.data ?: Uri.EMPTY, intent.extras ?: Bundle.EMPTY)
             if (savedInstanceState?.getBoolean(STATE_PLAYING) != false)
                 it.play()
         }
@@ -253,10 +253,10 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onBackPressed() {
-        if (chatViewModel.isThreadListVisible.value == true){
-            chatViewModel.isThreadListVisible.value = false
-            return
-        }
+//        if (chatViewModel.isThreadListVisible.value == true){
+//            chatViewModel.isThreadListVisible.value = false
+//            return
+//        }
         super.onBackPressed()
     }
 

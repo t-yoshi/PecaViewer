@@ -126,11 +126,13 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
     }
 
     /**コンタクトURL*/
-    val channelContactUrl: MutableLiveData<String> = MediatorLiveData<String>().also { ld ->
+    val channelContactUrl: LiveData<String> = MediatorLiveData<String>().also { ld ->
         ld.addSource(eventLiveData) { ev ->
             when (ev) {
                 is PeerCastChannelEvent -> {
-                    ld.value = ev.url
+                    //Timber.d("${ld.value} ${ev.url}")
+                    if (ld.value != ev.url)
+                        ld.value = ev.url
                 }
             }
         }

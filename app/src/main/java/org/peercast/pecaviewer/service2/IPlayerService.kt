@@ -19,16 +19,36 @@ interface IPlayerService {
 
     fun updateVideoSurfaces()
 
+    /**
+     * (前回再生したURLを)再生する
+     */
     fun play()
 
-    fun prepareFromUri(uri: Uri, extras: Bundle? = null)
+    /**
+     * 再生を準備する
+     * @param extras PecaPlayからのチャンネル情報を含むインテントのextras
+     */
+    fun prepareFromUri(uri: Uri, extras: Bundle)
 
-    fun playFromUri(uri: Uri, extras: Bundle? = null)
+    /**
+     * 再生する
+     * @param extras PecaPlayからのチャンネル情報を含むインテントのextras
+     */
+    fun playFromUri(uri: Uri, extras: Bundle)
 
+    /**
+     * 一時停止する
+     * */
     fun pause()
 
+    /**
+     * 停止する
+     * */
     fun stop()
 
+    /**
+     * 再生中動画のサムネ
+     * */
     var thumbnail: Bitmap
 
     var videoScale: MediaPlayer.ScaleType

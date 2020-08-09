@@ -2,11 +2,11 @@ package org.peercast.pecaviewer.chat
 
 import android.app.Application
 import android.content.Context
+import androidx.annotation.MainThread
 import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.net2.*
@@ -22,7 +22,6 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     private var boardConn by Delegates.observable<IBoardConnection?>(null) { _, _, _ ->
         updateChatToolbarTitle()
     }
-    private var autoReloadJob: Job? = null
 
     //コンタクトURL。配信者が更新しないかぎり変わらない。
     private var contactUrl = ""
@@ -36,8 +35,6 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
      * スレッドのメッセージを再読込する。
      * */
     suspend fun reloadThread() {
-        autoReloadJob?.cancel()
-
         if (chatViewModel.isMessageListRefreshing.value == true) {
             Timber.w("already loading.")
             return
@@ -47,27 +44,13 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         clearSnackMessage()
         try {
             val conn = boardConn
+            //Timber.d("$boardConn")
             if (conn is IBoardThreadConnection) {
                 chatViewModel.selectedThreadPoster.postValue(
                     if (conn.info.isPostable && conn is IBoardThreadPoster) conn else null
                 )
                 val messages = conn.loadMessages()
-                if (true || messages != chatViewModel.messageLiveData.value) {
-                    chatViewModel.messageLiveData.postValue(messages)
-
-                    val autoReloadSec = autoReloadThreadSec
-                    if (autoReloadSec > 0){
-                        autoReloadJob = chatViewModel.viewModelScope.launch {
-                            Timber.d("Set auto-reloading after ${autoReloadSec}seconds.")
-                            delay(autoReloadSec * 1000L)
-                            Timber.d("Start auto-reloading.")
-                            autoReloadJob = null
-                            reloadThread()
-                        }
-                    }
-                } else {
-                    //postSnackMessage("have not changed.")
-                }
+                chatViewModel.messageLiveData.postValue(messages)
             }
         } catch (e: IOException) {
             postSnackErrorMessage(e)
@@ -77,22 +60,23 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     }
 
     /**
-     * n秒毎にスレッドを自動的に再読込する。n<=0無効。
-     * */
-    var autoReloadThreadSec: Int = 0
-
-    /**
      * コンタクトURLを読込む。
      * */
     suspend fun loadUrl(url: String, isForce: Boolean = false) {
-        if (!url.matches("""^https?://.+""".toRegex())) {
-            Timber.w("invalid url: $url")
-            return
+        when {
+            url.isEmpty() -> {
+            }
+            !url.matches("""^https?://.+""".toRegex()) -> {
+                Timber.w("invalid url: $url")
+            }
+            url != contactUrl || isForce -> {
+                contactUrl = url
+                return doLoadUrl(url)
+            }
         }
-        if (url != contactUrl || isForce) {
-            contactUrl = url
-            doLoadUrl(url)
-        }
+        contactUrl = ""
+        boardConn = null
+        threadSelect(null)
     }
 
     private suspend fun doLoadUrl(url: String) {
@@ -105,7 +89,9 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
             val conn = openBoardConnection(url)
             boardConn = conn
 
-            chatViewModel.threadLiveData.postValue(conn.loadThreads())
+            val threads = conn.loadThreads()
+            Timber.d("threads=$threads")
+            chatViewModel.threadLiveData.postValue(threads)
 
             //スレッド選択の復元
             val threadSelectFilter = prefs.restoreSelectedThread(conn.info)
@@ -117,7 +103,6 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
                     conn.info
                 }
                 else -> {
-//                  postSnackMessage("thread is not selected.")
                     null
                 }
             }
@@ -125,6 +110,9 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         } catch (e: IOException) {
             threadSelect(null)
             postSnackErrorMessage(e)
+        } catch (t: Throwable) {
+            Timber.w(t)
+            throw t
         } finally {
             chatViewModel.isThreadListRefreshing.postValue(false)
         }
@@ -156,16 +144,17 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         }
     }
 
-    fun updateChatToolbarTitle(){
+    @MainThread
+    fun updateChatToolbarTitle() {
         val title = when (chatViewModel.isThreadListVisible.value) {
             true -> boardConn?.info?.boardTopTitle
             else -> boardConn?.info?.title
         }
-        chatViewModel.chatToolbarTitle.postValue(title)
+        chatViewModel.chatToolbarTitle.value = title
     }
 
     /**掲示板に書き込む*/
-    fun postMessage(poster: IBoardThreadPoster, msg: PostMessage) : Job {
+    fun postMessage(poster: IBoardThreadPoster, msg: PostMessage): Job {
         return chatViewModel.viewModelScope.launch {
             val d = async {
                 val r = kotlin.runCatching { poster.postMessage(msg) }
@@ -270,7 +259,7 @@ private class BbsThreadPreference(c: Context) {
     }
 
     //避難所にいるかどうか
-    private fun isInShelter(boardInfo: IBoardInfo) : Boolean {
+    private fun isInShelter(boardInfo: IBoardInfo): Boolean {
         //避難所板 || 避難所スレ
         return "避難所" in boardInfo.boardTopTitle ||
                 "避難所" in boardInfo.title
