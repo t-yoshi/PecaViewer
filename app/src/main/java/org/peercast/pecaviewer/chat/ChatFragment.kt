@@ -1,5 +1,8 @@
 package org.peercast.pecaviewer.chat
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -23,13 +26,17 @@ import org.peercast.pecaviewer.AppViewModel
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
 import org.peercast.pecaviewer.chat.adapter.ThreadAdapter
+import org.peercast.pecaviewer.chat.thumbnail.ImageViewerFragment
+import org.peercast.pecaviewer.chat.thumbnail.ThumbnailUrl
+import org.peercast.pecaviewer.chat.thumbnail.ThumbnailView
 import org.peercast.pecaviewer.databinding.FragmentChatBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
-class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener {
+class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener,
+ThumbnailView.OnItemEventListener{
 
     private lateinit var job: Job
     override val coroutineContext: CoroutineContext
@@ -41,7 +48,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
     private val appPrefs by inject<AppPreference>()
 
     private val threadAdapter = ThreadAdapter()
-    private val messageAdapter = MessageAdapter()
+    private val messageAdapter = MessageAdapter(this)
     private var isAlreadyRead = false //既読
     private val autoReload = AutoReload()
     private var loadingJob: Job? = null
@@ -243,6 +250,18 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         if (n > 0) {
             val manager = vMessageList.layoutManager as LinearLayoutManager
             manager.scrollToPositionWithOffset(n - 1, 0)
+        }
+    }
+
+    override fun onLaunchImageViewer(u: ThumbnailUrl) {
+        if (u.linkUrl.isNotEmpty()) {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u.linkUrl)))
+            } catch (e: ActivityNotFoundException) {
+                Timber.e(e)
+            }
+        } else {
+            ImageViewerFragment.create(u.imageUrl).show(parentFragmentManager, "ImageViewerFragment")
         }
     }
 

@@ -58,7 +58,7 @@ class PecaViewerApplication : Application() {
         val now = System.currentTimeMillis()
         filesDir.listFiles { f ->
             f.extension == "png" && f.lastModified() + 7 * 24 * 60 * 60_000L < now
-        }.forEach {
+        }?.forEach {
             it.delete()
         }
     }

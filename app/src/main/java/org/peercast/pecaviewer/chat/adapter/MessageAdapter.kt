@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.MainThread
+import androidx.databinding.Observable
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.bbs_message_item_simple.view.*
@@ -13,6 +14,7 @@ import org.peercast.pecaviewer.BR
 import org.peercast.pecaviewer.chat.net2.IBrowsable
 import org.peercast.pecaviewer.chat.net2.IMessage
 import org.peercast.pecaviewer.chat.net2.PostMessage
+import org.peercast.pecaviewer.chat.thumbnail.ThumbnailView
 import org.peercast.pecaviewer.databinding.BbsMessageItemBasicBinding
 import org.peercast.pecaviewer.databinding.BbsMessageItemSeparatorBinding
 import org.peercast.pecaviewer.databinding.BbsMessageItemSimpleBinding
@@ -20,7 +22,7 @@ import timber.log.Timber
 import kotlin.properties.Delegates
 
 
-class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
+class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEventListener) : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
     PopupSpan.SupportAdapter {
 
     private var itemsOrigin = emptyList<IMessage>()
@@ -84,14 +86,21 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
         )
     }
 
-    class ViewHolder(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class ViewHolder(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
         val viewModel = MessageViewModel()
 
         init {
             if (!binding.setVariable(BR.viewModel, viewModel))
                 throw RuntimeException("Nothing defined viewModel in layout.")
             itemView.vBody?.movementMethod = LinkMovementMethod.getInstance()
-            itemView.vThumbnail?.adapter = ThumbnailAdapter()
+            itemView.vThumbnail?.let { v->
+                v.eventListener = thumbnailViewListener
+                viewModel.thumbnails.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback(){
+                    override fun onPropertyChanged(sender: Observable, propertyId: Int) {
+                        v.adapter.urls = viewModel.thumbnails.get() ?: emptyList()
+                    }
+                })
+            }
         }
     }
 
@@ -121,6 +130,7 @@ class MessageAdapter : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.viewModel.setMessage(itemsHolder[position], defaultViewType == SIMPLE)
+        //holder.itemView.vThumbnail?.adapter?.urls = holder.viewModel.thumbnails.get() ?: emptyList()
         holder.binding.executePendingBindings()
     }
 

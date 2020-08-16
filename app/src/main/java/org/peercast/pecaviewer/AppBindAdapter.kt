@@ -1,6 +1,5 @@
 package org.peercast.pecaviewer
 
-import android.net.Uri
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -17,11 +16,9 @@ import androidx.core.view.isVisible
 import androidx.core.view.marginRight
 import androidx.core.view.updateLayoutParams
 import androidx.databinding.BindingAdapter
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
 import org.koin.core.KoinComponent
-import org.peercast.pecaviewer.chat.adapter.ThumbnailAdapter
 
 
 object AppBindAdapter : KoinComponent {
@@ -36,15 +33,6 @@ object AppBindAdapter : KoinComponent {
             val tv = TypedValue()
             c.theme.resolveAttribute(android.R.attr.selectableItemBackground, tv, true)
             view.setBackgroundResource(tv.resourceId)
-        }
-    }
-
-    @JvmStatic
-    @BindingAdapter("thumbnailUrls")
-    fun bindThumbnailUrls(view: RecyclerView, urls: List<Uri>) {
-        with(view.adapter as ThumbnailAdapter) {
-            imageUrls = urls
-            notifyDataSetChanged()
         }
     }
 

@@ -1,8 +1,8 @@
 package org.peercast.pecaviewer
 
 import android.app.Application
-import android.preference.PreferenceManager
 import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import org.videolan.libvlc.MediaPlayer
 import timber.log.Timber

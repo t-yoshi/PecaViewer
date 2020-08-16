@@ -2,4 +2,6 @@
 <resources>
     <bool name="isLandscapeMode">false</bool>
     <bool name="isNarrowScreen">true</bool>
+    <dimen name="min_popup_image_width">250dp</dimen>
+    <dimen name="min_popup_image_height">250dp</dimen>
 </resources>

@@ -1,15 +1,17 @@
 package org.peercast.pecaviewer.chat.adapter
 
-import android.net.Uri
 import android.text.SpannableStringBuilder
 import android.text.style.URLSpan
 import androidx.core.text.HtmlCompat
 import androidx.core.text.set
 import androidx.databinding.ObservableField
+import org.peercast.pecaviewer.BuildConfig
 import org.peercast.pecaviewer.chat.net2.BbsMessage
 import org.peercast.pecaviewer.chat.net2.IMessage
+import org.peercast.pecaviewer.chat.thumbnail.ThumbnailUrl
 import org.peercast.pecaviewer.util.DateUtils
 import kotlin.math.min
+import kotlin.random.Random
 
 class MessageViewModel {
     /**レス番号*/
@@ -26,7 +28,7 @@ class MessageViewModel {
 
     val elapsedTime = ObservableField<CharSequence>()
 
-    val thumbnails = ObservableField<List<Uri>>()
+    val thumbnails = ObservableField<List<ThumbnailUrl>>()
 
     fun setMessage(m: IMessage, isShowElapsedTime: Boolean = true) {
         number.set("${m.number}")
@@ -46,25 +48,15 @@ class MessageViewModel {
             elapsedTime.set("")
         }
 
-        val thumbnails_ = ArrayList<Uri>()
-        RE_URL.findAll(ssbBody).mapNotNull {
-            var u = it.groupValues[0]
-            if (u.startsWith("ttp"))
-                u = "h$u"
-            val url = Uri.parse(u)
-            when {
-                ThumbnailAdapter.isImageUrl(url) -> url
-                else -> null
+        val urls = if (BuildConfig.DEBUG){
+            val r = Random(ssbBody.hashCode())
+            ThumbnailUrl.parse(ssbBody.toString() + TEST_TEXT).let {
+                it.subList(0, r.nextInt(it.size))
             }
-        }.let(thumbnails_::addAll)
-
-/*
-        thumbnails_.add(Uri.parse("https://www.nicovideo.jp/watch/sm6116565"))
-        thumbnails_.add(Uri.parse("https://i.imgur.com/hJCEq8P.jpg"))
-        thumbnails_.add(Uri.parse("https://www.youtube.com/watch?v=rTSFxx76P0A"))
-// */
-
-        thumbnails.set(thumbnails_)
+        } else {
+            ThumbnailUrl.parse(ssbBody)
+        }
+        thumbnails.set(urls.take(32))
 
         applyUrlSpan(ssbBody)
         body.set(ssbBody)
@@ -91,6 +83,16 @@ class MessageViewModel {
             }
             return ssb
         }
+
+        private const val TEST_TEXT = """
+             "https://media2.giphy.com/media/xreCEnteawblu/giphy.gif?cid=ecf05e47scyg0bt1ljd58r7kj4xkcifs4x5c92pf5bwfhygv&rid=giphy.gif"),
+            "https://i.giphy.com/media/2igz2N2bac1Wg/giphy.webp"),
+            ttps://i.pinimg.com/originals/a7/dc/70/a7dc706832d1f818a3cb9d2202eb25cf.gif"),
+            ("https://upload.wikimedia.org/wikipedia/commons/9/9a/PNG_transparency_demonstration_2.png"),
+            https://www.youtube.com/watch?v=DsYdPQ1igvM
+            https://www.nicovideo.jp/watch/sm9
+            https://file-examples-com.github.io/uploads/2017/10/file_example_JPG_1MB.jpg
+        """
     }
 
 }

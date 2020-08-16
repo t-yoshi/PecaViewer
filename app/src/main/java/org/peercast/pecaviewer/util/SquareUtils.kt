@@ -8,6 +8,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import org.peercast.pecaviewer.BuildConfig
+import org.peercast.pecaviewer.chat.thumbnail.LimitSizeInterceptor
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -31,6 +32,7 @@ class DefaultSquareHolder(private val a: Application) : ISquareHolder {
                     .build()
             )
         }
+        .addInterceptor(LimitSizeInterceptor())
         .connectionSpecs(connectionSpecs)
         //.dispatcher(Dispatcher(AsyncTask.THREAD_POOL_EXECUTOR as ExecutorService))
         .readTimeout(HTTP_RW_TIMEOUT, TimeUnit.SECONDS)
