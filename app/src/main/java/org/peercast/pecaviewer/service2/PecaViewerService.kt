@@ -191,7 +191,10 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         ) {
             Timber.d("onNotifyChannel: $type $channelId $channelInfo")
             if (playingUrl.path?.contains(channelId) == true) {
-                eventLiveData.value = PeerCastChannelEvent(channelInfo)
+                val ev = PeerCastChannelEvent(channelInfo)
+                //接続中に空白だけがくる
+                if ("${ev.name}${ev.desc}${ev.comment}".isNotBlank())
+                    eventLiveData.value = ev
             }
         }
 
