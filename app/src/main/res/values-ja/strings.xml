@@ -4,4 +4,7 @@
     <string name="screenshot" >スクリーンショット</string>
     <string name="sending">送信しています…</string>
     <string name="buffering">バッファ中です… %.1f%%</string>
+
+    <string name="chat_auto_reload">自動リロード</string>
+    <string name="chat_simple_display">簡易表示</string>
 </resources>

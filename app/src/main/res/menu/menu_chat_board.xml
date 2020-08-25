@@ -16,12 +16,12 @@
             android:icon="@drawable/ic_close_black_24dp"/>
 
     <item
-            android:title="Auto Reload"
+            android:title="@string/chat_auto_reload"
             android:checkable="true"
             app:showAsAction="never"
             android:id="@+id/menu_auto_reload_enabled"/>
     <item
-            android:title="Simple display"
+            android:title="@string/chat_simple_display"
             android:checkable="true"
             app:showAsAction="never"
             android:id="@+id/menu_simple_display"/>

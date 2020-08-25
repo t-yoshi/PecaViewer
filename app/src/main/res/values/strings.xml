@@ -13,4 +13,7 @@
 
     <string name="sending">Sending…</string>
     <string name="buffering">Buffering… %.1f%%</string>
+
+    <string name="chat_auto_reload">Auto Reload</string>
+    <string name="chat_simple_display">Simple Display</string>
 </resources>
