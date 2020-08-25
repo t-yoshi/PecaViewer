@@ -22,10 +22,12 @@ sealed class ThumbnailUrl {
     }
 
     data class YouTube(
-        val id : String
+        val id : String,
+        /**?t=1234*/
+        val query : String = ""
     ) : ThumbnailUrl() {
         override val imageUrl = "https://i.ytimg.com/vi/$id/default.jpg"
-        override val linkUrl = "https://youtu.be/$id"
+        override val linkUrl = "https://youtu.be/$id$query"
     }
 
     data class NicoVideo(
@@ -46,10 +48,10 @@ sealed class ThumbnailUrl {
         fun parse(s: CharSequence) : List<ThumbnailUrl> {
             val m = TreeMap<Int, ThumbnailUrl>()
             RE_YOUTUBE_URL_1.findImageUrl(s, m){
-                YouTube(it[1])
+                YouTube(it[1], it[2])
             }
             RE_YOUTUBE_URL_2.findImageUrl(s, m){
-                YouTube(it[1])
+                YouTube(it[1], it[2])
             }
             RE_NICO_URL.findImageUrl(s, m){
                 NicoVideo(it[2])
@@ -69,9 +71,9 @@ sealed class ThumbnailUrl {
 
 
         private val RE_YOUTUBE_URL_1 =
-            """\b(?:www\.)?youtube\.com/.+?v=([\w_\-]+)""".toRegex()
+            """\b(?:www\.)?youtube\.com/.+?v=([\w_\-]+)(\?t=\d+)?""".toRegex()
         private val RE_YOUTUBE_URL_2 =
-            """\byoutu\.be/([\w_\-]+)""".toRegex()
+            """\byoutu\.be/([\w_\-]+)(\?t=\d+)?""".toRegex()
 
         private val RE_NICO_URL =
             """\b(www\.nicovideo\.jp/watch|nico\.ms)/((sm|nm|)(\d{1,10}))\b""".toRegex()
