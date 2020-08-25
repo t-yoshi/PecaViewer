@@ -20,5 +20,9 @@
             android:checkable="true"
             app:showAsAction="never"
             android:id="@+id/menu_auto_reload_enabled"/>
-
+    <item
+            android:title="Simple display"
+            android:checkable="true"
+            app:showAsAction="never"
+            android:id="@+id/menu_simple_display"/>
 </menu>

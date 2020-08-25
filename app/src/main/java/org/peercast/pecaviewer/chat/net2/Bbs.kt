@@ -137,13 +137,15 @@ abstract class BaseBbsThreadInfo(
 open class BbsMessage(
     final override val threadInfo: IThreadInfo,
     final override val number: Int,
-    final override val name: CharSequence,
-    final override val mail: CharSequence,
+    name: String,
+    mail: String,
     final override val date: CharSequence,
     body: String,
     final override val id: CharSequence
 ) : IMessage, IBrowsable {
 
+    final override val name: CharSequence = HtmlEscape.unescapeHtml(name)
+    final override val mail: CharSequence = HtmlEscape.unescapeHtml(mail)
     final override val body: CharSequence = BbsUtils.stripHtml(body)
 
     override val url = "${threadInfo.url}$number"

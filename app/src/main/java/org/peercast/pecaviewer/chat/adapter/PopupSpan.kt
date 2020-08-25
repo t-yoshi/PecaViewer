@@ -9,6 +9,7 @@ import android.widget.PopupWindow
 import androidx.core.text.set
 import androidx.recyclerview.widget.RecyclerView
 import org.peercast.pecaviewer.R
+import timber.log.Timber
 
 /**
 アンカーをクリックしてポップアップ
@@ -17,9 +18,9 @@ class PopupSpan private constructor(private val resNumber: Int) : ClickableSpan(
     override fun onClick(widget: View) {
         //Timber.d("--> #$resNumber $widget")
         val c = widget.context
-        val rv = findParentRecyclerView(widget) ?: return
-        val adapter = rv.adapter as? SupportAdapter ?: return
-        val view = adapter.createViewForPopupWindow(resNumber, rv) ?: return
+        val rv = findParentRecyclerView(widget) ?: return Timber.w("RecyclerView not found")
+        val adapter = rv.adapter as? SupportAdapter ?: return Timber.w("adapter not as SupportAdapter")
+        val view = adapter.createViewForPopupWindow(resNumber, rv) ?: return Timber.w("createViewForPopupWindow returned null")
         val bg = c.getDrawable(R.drawable.frame_bg_blue)
 
         PopupWindow(

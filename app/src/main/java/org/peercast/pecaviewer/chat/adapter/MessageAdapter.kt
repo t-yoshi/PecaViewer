@@ -130,7 +130,6 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.viewModel.setMessage(itemsHolder[position], defaultViewType == SIMPLE)
-        //holder.itemView.vThumbnail?.adapter?.urls = holder.viewModel.thumbnails.get() ?: emptyList()
         holder.binding.executePendingBindings()
     }
 
@@ -148,7 +147,7 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
         /**簡易表示*/
         const val SIMPLE = 0
 
-        /**TODO 詳細表示*/
+        /**詳細表示*/
         const val BASIC = 1
 
         private const val SEPARATOR = 2

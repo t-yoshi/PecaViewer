@@ -91,7 +91,7 @@ private class ZeroChannelBoardThreadConnection(
         var n = 0
         val result = base.client.parseText(req, "<>", 5) { a ->
             val date = a[2].substringBefore(" ID:")
-            val id = a[2].substringAfter(" ID:")
+            val id = a[2].substringAfter(" ID:", "")
             BbsMessage(info, ++n, a[0], a[1], date, a[3], id)
         }
         info.numMessages = n

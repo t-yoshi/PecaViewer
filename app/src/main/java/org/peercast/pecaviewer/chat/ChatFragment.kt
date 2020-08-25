@@ -1,7 +1,9 @@
 package org.peercast.pecaviewer.chat
 
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -19,9 +22,7 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_chat.*
 import kotlinx.coroutines.*
-import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.peercast.pecaviewer.AppPreference
 import org.peercast.pecaviewer.AppViewModel
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
@@ -36,7 +37,7 @@ import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
 class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener,
-ThumbnailView.OnItemEventListener{
+    ThumbnailView.OnItemEventListener {
 
     private lateinit var job: Job
     override val coroutineContext: CoroutineContext
@@ -45,7 +46,9 @@ ThumbnailView.OnItemEventListener{
     private val chatViewModel by sharedViewModel<ChatViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val appViewModel by sharedViewModel<AppViewModel>()
-    private val appPrefs by inject<AppPreference>()
+    private val chatPrefs by lazy(LazyThreadSafetyMode.NONE) {
+        requireContext().getSharedPreferences("chat", Context.MODE_PRIVATE)
+    }
 
     private val threadAdapter = ThreadAdapter()
     private val messageAdapter = MessageAdapter(this)
@@ -56,7 +59,11 @@ ThumbnailView.OnItemEventListener{
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        autoReload.isEnabled = appPrefs.isAutoReloadEnabled
+        autoReload.isEnabled = chatPrefs.isAutoReloadEnabled
+        messageAdapter.defaultViewType = when(chatPrefs.isSimpleDisplay){
+            true -> MessageAdapter.SIMPLE
+            else -> MessageAdapter.BASIC
+        }
     }
 
     override fun onCreateView(
@@ -87,7 +94,10 @@ ThumbnailView.OnItemEventListener{
             }
         }
         vChatToolbar.setOnMenuItemClickListener(this)
-        vChatToolbar.overflowIcon = vChatToolbar.context.getDrawable(R.drawable.ic_more_vert_black_24dp)
+        vChatToolbar.overflowIcon = ContextCompat.getDrawable(
+            vChatToolbar.context,
+            R.drawable.ic_more_vert_black_24dp
+        )
 
         vMessageList.setOnClickListener {
             chatViewModel.isToolbarVisible.value = true
@@ -98,7 +108,7 @@ ThumbnailView.OnItemEventListener{
                     //最後までスクロールしたらすべて既読とみなす
                     Timber.d("AlreadyRead!")
                     isAlreadyRead = true
-                    autoReload.isEnabled = appPrefs.isAutoReloadEnabled
+                    autoReload.isEnabled = chatPrefs.isAutoReloadEnabled
                     autoReload.scheduleRun()
                 }
 
@@ -169,14 +179,16 @@ ThumbnailView.OnItemEventListener{
             if (it) {
                 vChatToolbar.inflateMenu(R.menu.menu_chat_board)
                 vChatToolbar.menu.findItem(R.id.menu_auto_reload_enabled).isChecked =
-                    appPrefs.isAutoReloadEnabled
+                    chatPrefs.isAutoReloadEnabled
+                vChatToolbar.menu.findItem(R.id.menu_simple_display).isChecked =
+                    chatPrefs.isSimpleDisplay
             } else {
                 vChatToolbar.inflateMenu(R.menu.menu_chat_thread)
             }
         })
 
         loadingLiveData.observe(viewLifecycleOwner, Observer {
-            with(vChatToolbar.menu){
+            with(vChatToolbar.menu) {
                 findItem(R.id.menu_reload).isVisible = !it
                 findItem(R.id.menu_abort).isVisible = it
             }
@@ -238,8 +250,17 @@ ThumbnailView.OnItemEventListener{
             R.id.menu_auto_reload_enabled -> {
                 val b = !item.isChecked
                 item.isChecked = b
-                appPrefs.isAutoReloadEnabled = b
+                chatPrefs.isAutoReloadEnabled = b
                 autoReload.isEnabled = b
+            }
+            R.id.menu_simple_display -> {
+                val b = !item.isChecked
+                item.isChecked = b
+                chatPrefs.isSimpleDisplay = b
+                messageAdapter.defaultViewType = when(b){
+                    true -> MessageAdapter.SIMPLE
+                    else -> MessageAdapter.BASIC
+                }
             }
         }
         return true
@@ -261,7 +282,8 @@ ThumbnailView.OnItemEventListener{
                 Timber.e(e)
             }
         } else {
-            ImageViewerFragment.create(u.imageUrl).show(parentFragmentManager, "ImageViewerFragment")
+            ImageViewerFragment.create(u.imageUrl)
+                .show(parentFragmentManager, "ImageViewerFragment")
         }
     }
 
@@ -337,8 +359,24 @@ ThumbnailView.OnItemEventListener{
             }
     }
 
+    /**スレを自動的にリロードするか*/
+    private var SharedPreferences.isAutoReloadEnabled: Boolean
+        get() = getBoolean(KEY_AUTO_RELOAD, true)
+        set(value) {
+            edit { putBoolean(KEY_AUTO_RELOAD, value) }
+        }
+
+    private var SharedPreferences.isSimpleDisplay: Boolean
+        get() = getBoolean(KEY_SIMPLE_DISPLAY, true)
+        set(value) {
+            edit { putBoolean(KEY_SIMPLE_DISPLAY, value) }
+        }
+
     companion object {
         private const val AUTO_RELOAD_SEC = 60
+
+        private const val KEY_AUTO_RELOAD = "key_chat_auto_reload"
+        private const val KEY_SIMPLE_DISPLAY = "key_simple_display"
     }
 }
 

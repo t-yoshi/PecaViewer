@@ -23,6 +23,8 @@ class MessageViewModel {
     /**日付*/
     val date = ObservableField<CharSequence>()
 
+    val id = ObservableField<CharSequence>()
+
     /**本文*/
     val body = ObservableField<CharSequence>()
 
@@ -34,8 +36,21 @@ class MessageViewModel {
         number.set("${m.number}")
         name.set(m.name)
         date.set(m.date)
+        id.set(m.id)
 
         val ssbBody = SpannableStringBuilder(m.body.trimEnd())
+
+        val urls = if (BuildConfig.DEBUG){
+            val r = Random(ssbBody.hashCode())
+            ssbBody.append(TEST_TEXT)
+            ThumbnailUrl.parse(ssbBody).let {
+                it.subList(0, r.nextInt(it.size))
+            }
+        } else {
+            ThumbnailUrl.parse(ssbBody)
+        }
+        thumbnails.set(urls.take(32))
+
         //アンカーでポップアップ
         PopupSpan.applyForAnchor(ssbBody)
 
@@ -48,15 +63,6 @@ class MessageViewModel {
             elapsedTime.set("")
         }
 
-        val urls = if (BuildConfig.DEBUG){
-            val r = Random(ssbBody.hashCode())
-            ThumbnailUrl.parse(ssbBody.toString() + TEST_TEXT).let {
-                it.subList(0, r.nextInt(it.size))
-            }
-        } else {
-            ThumbnailUrl.parse(ssbBody)
-        }
-        thumbnails.set(urls.take(32))
 
         applyUrlSpan(ssbBody)
         body.set(ssbBody)
@@ -92,6 +98,7 @@ class MessageViewModel {
             https://www.youtube.com/watch?v=DsYdPQ1igvM
             https://www.nicovideo.jp/watch/sm9
             https://file-examples-com.github.io/uploads/2017/10/file_example_JPG_1MB.jpg
+             >>1
         """
     }
 
