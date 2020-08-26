@@ -98,7 +98,7 @@ private class ZeroChannelBoardThreadConnection(
         return result
     }
 
-    override suspend fun postMessage(m: PostMessage): String {
+    override suspend fun postMessage(m: PostMessage): CharSequence {
         //bbs=[BOARD]&time=[POST_TIME]&FROM=[POST_NAME]&mail=[POST_MAIL]&MESSAGE=[POST_MESSAGE]
         val body = FormBody.Builder()
             .addEncoded("bbs", info.board.board)

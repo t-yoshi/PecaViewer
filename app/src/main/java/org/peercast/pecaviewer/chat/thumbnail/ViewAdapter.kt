@@ -1,8 +1,12 @@
 package org.peercast.pecaviewer.chat.thumbnail
 
+import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
+import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.databinding.ThumbnailViewItemBinding
 import kotlin.properties.Delegates
@@ -51,7 +55,7 @@ class ViewAdapter(private val view: ThumbnailView) {
     ) {
         private val c = binding.root.context
         private val viewModel = ItemViewModel()
-        private val target = NotAnimatedTarget(c.resources.displayMetrics, viewModel)
+        private val target = NotAnimatedTarget(binding.icon.layoutParams, viewModel)
 
         init {
             binding.vm = viewModel
@@ -97,6 +101,22 @@ class ViewAdapter(private val view: ThumbnailView) {
             binding.root.isGone = true
             prevLoader?.cancelLoad()
             prevLoader = null
+        }
+    }
+
+    //64dp
+    private class NotAnimatedTarget(p: ViewGroup.LayoutParams,
+            private val vm: ItemViewModel) : CustomTarget<Drawable>(p.width, p.height){
+        override fun onLoadFailed(errorDrawable: Drawable?) {
+            vm.src.set(errorDrawable)
+        }
+
+        override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
+            vm.src.set(resource)
+        }
+
+        override fun onLoadCleared(placeholder: Drawable?) {
+            vm.src.set(placeholder)
         }
     }
 }

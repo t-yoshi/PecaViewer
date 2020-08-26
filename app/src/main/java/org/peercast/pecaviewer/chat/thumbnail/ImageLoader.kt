@@ -119,7 +119,7 @@ class NicoImageLoader(
 
     override fun onFailure(call: Call, e: IOException) {
         Timber.w(e)
-        vm.src.set(
+        target.onLoadFailed(
             ContextCompat.getDrawable(c,
             R.drawable.ic_warning_gray_24dp
         ))

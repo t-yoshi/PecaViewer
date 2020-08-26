@@ -36,7 +36,12 @@ interface IMessage {
     /**日付*/
     val date: CharSequence
 
-    /**本文*/
+    /**
+     * 本文
+     * @see PopupSpan
+     * @see ClickableSpan
+     * @see ThumbnailSpan
+     * */
     val body: CharSequence
 
     /**id*/
@@ -79,7 +84,7 @@ interface IBoardThreadPoster {
      * @return 書き込み結果を示す文字列
      * @throws java.io.IOException
      * */
-    suspend fun postMessage(m: PostMessage): String
+    suspend fun postMessage(m: PostMessage): CharSequence
 }
 
 /**掲示板スレッドへの接続と書き込み*/

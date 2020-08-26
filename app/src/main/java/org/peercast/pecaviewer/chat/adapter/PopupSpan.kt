@@ -1,11 +1,12 @@
 package org.peercast.pecaviewer.chat.adapter
 
-import android.text.SpannableStringBuilder
+import android.text.Spannable
 import android.text.style.ClickableSpan
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.PopupWindow
+import androidx.core.content.ContextCompat
 import androidx.core.text.set
 import androidx.recyclerview.widget.RecyclerView
 import org.peercast.pecaviewer.R
@@ -21,7 +22,7 @@ class PopupSpan private constructor(private val resNumber: Int) : ClickableSpan(
         val rv = findParentRecyclerView(widget) ?: return Timber.w("RecyclerView not found")
         val adapter = rv.adapter as? SupportAdapter ?: return Timber.w("adapter not as SupportAdapter")
         val view = adapter.createViewForPopupWindow(resNumber, rv) ?: return Timber.w("createViewForPopupWindow returned null")
-        val bg = c.getDrawable(R.drawable.frame_bg_blue)
+        val bg = ContextCompat.getDrawable(c, R.drawable.frame_bg_blue)
 
         PopupWindow(
             view, rv.width,
@@ -43,12 +44,12 @@ class PopupSpan private constructor(private val resNumber: Int) : ClickableSpan(
         /**
          * テキスト内のアンカーにPopupSpanを適用する
          */
-        fun applyForAnchor(ssb: SpannableStringBuilder): SpannableStringBuilder {
-            RE_ANCHOR.findAll(ssb).forEach { mr ->
-                ssb[mr.range.first, mr.range.last + 1] =
+        fun Spannable.applyPopupSpanForAnchors(): Spannable {
+            RE_ANCHOR.findAll(this).forEach { mr ->
+                this[mr.range.first, mr.range.last + 1] =
                     PopupSpan(mr.groupValues[1].toInt())
             }
-            return ssb
+            return this
         }
 
         private fun findParentRecyclerView(widget: View): RecyclerView? {

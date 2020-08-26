@@ -147,7 +147,7 @@ private class ShitarabaBoardThreadConnection(
         return result
     }
 
-    override suspend fun postMessage(m: PostMessage): String {
+    override suspend fun postMessage(m: PostMessage): CharSequence {
         val body = FormBody.Builder()
             .addEncoded("DIR", info.board.dir)
             .addEncoded("BBS", info.board.bbsNumber)

@@ -1,9 +1,17 @@
 package org.peercast.pecaviewer.chat.net2
 
-import androidx.core.text.HtmlCompat
+import android.text.Spannable
+import android.text.style.URLSpan
+import androidx.core.text.parseAsHtml
+import androidx.core.text.set
+import androidx.core.text.toSpannable
 import okhttp3.Request
 import org.koin.core.KoinComponent
 import org.koin.core.get
+import org.peercast.pecaviewer.chat.adapter.PopupSpan.Companion.applyPopupSpanForAnchors
+import org.peercast.pecaviewer.chat.net2.BbsUtils.applyUrlSpan
+import org.peercast.pecaviewer.chat.net2.BbsUtils.stripHtml
+import org.peercast.pecaviewer.chat.thumbnail.ThumbnailSpan.Companion.applyThumbnailSpan
 import org.peercast.pecaviewer.util.DateUtils
 import org.peercast.pecaviewer.util.ISquareHolder
 import org.peercast.pecaviewer.util.runAwait
@@ -47,13 +55,13 @@ class BbsClient(val defaultCharset: Charset) : KoinComponent {
     /**504: ローカルキャッシュが期限切れである*/
     class UnsatisfiableRequestException(msg: String) : IOException(msg)
 
-    suspend fun post(req: Request): String {
+    suspend fun post(req: Request): CharSequence {
         val ret = square.okHttpClient.newCall(req).runAwait { res ->
             val body = res.body ?: throw IOException("body returned null.")
             val cs = body.contentType()?.charset() ?: defaultCharset
             body.byteStream().reader(cs).readText()
         }
-        return BbsUtils.stripHtml(ret).trim().replace(RE_SPACE, " ")
+        return ret.stripHtml().trim().replace(RE_SPACE, " ")
     }
 
     companion object {
@@ -144,9 +152,14 @@ open class BbsMessage(
     final override val id: CharSequence
 ) : IMessage, IBrowsable {
 
-    final override val name: CharSequence = HtmlEscape.unescapeHtml(name)
-    final override val mail: CharSequence = HtmlEscape.unescapeHtml(mail)
-    final override val body: CharSequence = BbsUtils.stripHtml(body)
+    final override val name: CharSequence = name.parseAsHtml()
+    final override val mail: CharSequence = mail.parseAsHtml()
+    final override val body: CharSequence =
+    //(body + TEST_TEXT).stripHtml().toSpannable()
+        body.stripHtml().toSpannable()
+        .applyPopupSpanForAnchors() // PopupSpanを適用し、>123のようなアンカーでポップアップ
+        .applyUrlSpan() // URLSpanを適用し、リンクを動作させる
+        .applyThumbnailSpan() //ThumbnailSpanを適用し、サムネを生成する
 
     override val url = "${threadInfo.url}$number"
 
@@ -169,14 +182,34 @@ open class BbsMessage(
 
 object BbsUtils {
     private val RE_REMOVE_TAG = """(?is)<(script|style)[ >].+?</\1>""".toRegex()
+    private val RE_URL = """h?ttps?://[\w\-~/_.$}{#%,:@?&|=+]+""".toRegex()
 
-    fun stripHtml(text: String): String {
-        return HtmlCompat.fromHtml(
-            RE_REMOVE_TAG.replace(text, ""),
-            HtmlCompat.FROM_HTML_MODE_LEGACY
-        ).toString()
+    fun CharSequence.stripHtml(): CharSequence {
+        return RE_REMOVE_TAG.replace(this, "")
+            .parseAsHtml().toString()
     }
 
+    /**URLSpanを適用する*/
+    fun Spannable.applyUrlSpan(): Spannable {
+        RE_URL.findAll(this).forEach { mr ->
+            var u = mr.groupValues[0]
+            if (u.startsWith("ttp"))
+                u = "h$u"
+            this[mr.range.first, mr.range.last + 1] = URLSpan(u)
+            //Timber.d("${mr.range}: $u")
+        }
+        return this
+    }
 
+    const val TEST_TEXT = """
+             "https://media2.giphy.com/media/xreCEnteawblu/giphy.gif?cid=ecf05e47scyg0bt1ljd58r7kj4xkcifs4x5c92pf5bwfhygv&rid=giphy.gif"),
+            "https://i.giphy.com/media/2igz2N2bac1Wg/giphy.webp"),
+            ttps://i.pinimg.com/originals/a7/dc/70/a7dc706832d1f818a3cb9d2202eb25cf.gif"),
+            ("https://upload.wikimedia.org/wikipedia/commons/9/9a/PNG_transparency_demonstration_2.png"),
+            https://www.youtube.com/watch?v=DsYdPQ1igvM
+            https://www.nicovideo.jp/watch/sm9
+            https://file-examples-com.github.io/uploads/2017/10/file_example_JPG_1MB.jpg
+             >>1
+        """
 }
 

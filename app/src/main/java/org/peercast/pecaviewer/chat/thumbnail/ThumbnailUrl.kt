@@ -38,15 +38,17 @@ sealed class ThumbnailUrl {
     }
 
     companion object {
-        private fun Regex.findImageUrl(s: CharSequence, out: MutableMap<Int, ThumbnailUrl>, creator: (List<String>)-> ThumbnailUrl){
+        private fun Regex.findImageUrl(s: CharSequence, out: MutableMap<IntRange, ThumbnailUrl>, creator: (List<String>)-> ThumbnailUrl){
             //Timber.d("> $this $s")
             findAll(s).forEach { m->
-                out[m.range.first] = creator(m.groupValues)
+                out[m.range] = creator(m.groupValues)
             }
         }
 
-        fun parse(s: CharSequence) : List<ThumbnailUrl> {
-            val m = TreeMap<Int, ThumbnailUrl>()
+        fun findAll(s: CharSequence) : Map<IntRange, ThumbnailUrl> {
+            val m = TreeMap<IntRange, ThumbnailUrl>{ o1, o2 ->
+                o1.first - o2.first
+            }
             RE_YOUTUBE_URL_1.findImageUrl(s, m){
                 YouTube(it[1], it[2])
             }
@@ -66,20 +68,20 @@ sealed class ThumbnailUrl {
                     it[0]
                 )
             }
-            return m.values.toList()
+            return m
         }
 
 
         private val RE_YOUTUBE_URL_1 =
-            """\b(?:www\.)?youtube\.com/.+?v=([\w_\-]+)(\?t=\d+)?""".toRegex()
+            """\b(?:www\.)?youtube\.com/.+?v=([\w_\-]+)([?&]t=\d+[s]?)?""".toRegex()
         private val RE_YOUTUBE_URL_2 =
-            """\byoutu\.be/([\w_\-]+)(\?t=\d+)?""".toRegex()
+            """\byoutu\.be/([\w_\-]+)([?&]t=\d+[s]?)?""".toRegex()
 
         private val RE_NICO_URL =
             """\b(www\.nicovideo\.jp/watch|nico\.ms)/((sm|nm|)(\d{1,10}))\b""".toRegex()
 
         private val RE_GENERAL_IMAGE_URL =
-            """\bh?ttps?://.+\.(png|jpe?g|gif)\b""".toRegex()
+            """\bh?ttps?://\S+\.(png|jpe?g|gif)\b""".toRegex()
         //TODO |webp バージョンによってはGlideでロード例外が起きる
 
 
