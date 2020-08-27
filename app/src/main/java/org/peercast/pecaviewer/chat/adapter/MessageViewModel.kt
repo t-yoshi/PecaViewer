@@ -2,7 +2,6 @@ package org.peercast.pecaviewer.chat.adapter
 
 import android.text.Spannable
 import android.text.SpannableStringBuilder
-import androidx.core.text.HtmlCompat
 import androidx.core.text.getSpans
 import androidx.databinding.ObservableField
 import org.peercast.pecaviewer.chat.net2.BbsMessage
@@ -10,7 +9,6 @@ import org.peercast.pecaviewer.chat.net2.IMessage
 import org.peercast.pecaviewer.chat.thumbnail.ThumbnailSpan
 import org.peercast.pecaviewer.chat.thumbnail.ThumbnailUrl
 import org.peercast.pecaviewer.util.DateUtils
-import kotlin.math.min
 
 class MessageViewModel {
     /**レス番号*/
@@ -37,15 +35,6 @@ class MessageViewModel {
         date.set(m.date)
         id.set(m.id)
 
-//        val urls = if (BuildConfig.DEBUG){
-//            val r = Random(ssbBody.hashCode())
-//            ssbBody.append(TEST_TEXT)
-//            ThumbnailUrl.parse(ssbBody).let {
-//                it.subList(0, r.nextInt(it.size))
-//            }
-//        } else {
-//            ThumbnailUrl.parse(ssbBody)
-//        }
         (m.body as? Spannable)?.let {s->
             thumbnails.set(s.getSpans<ThumbnailSpan>().take(32).map { it.url })
         }
@@ -55,7 +44,7 @@ class MessageViewModel {
             elapsedTime.set(et)
             // elapsedTimeのぶん、末尾を空けておく
             val sbBody = SpannableStringBuilder(m.body.trimEnd())
-            sbBody.append(NBSP.repeat(min(et.width + 3, 3)))
+            sbBody.append(NBSP.repeat(et.width + 2))
             body.set(sbBody)
         } else {
             elapsedTime.set("")
@@ -69,7 +58,7 @@ class MessageViewModel {
         }
 
     companion object {
-        private val NBSP = HtmlCompat.fromHtml("&nbsp;", HtmlCompat.FROM_HTML_MODE_COMPACT)
+        private const val NBSP = "\u00a0"
         private val RE_LETTER = """[\da-zA-Z ]""".toRegex()
     }
 
