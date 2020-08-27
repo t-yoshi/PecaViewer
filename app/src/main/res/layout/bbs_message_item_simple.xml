@@ -36,7 +36,7 @@
                 android:layout_height="wrap_content"
                 android:text="@{viewModel.body}"
                 android:textAppearance="?attr/textAppearanceListItem"
-                android:textIsSelectable="true"
+                android:textIsSelectable="false"
                 app:layout_constrainedWidth="true"
                 app:layout_constraintHorizontal_bias="0"
                 app:layout_constraintStart_toEndOf="@id/vNumber"

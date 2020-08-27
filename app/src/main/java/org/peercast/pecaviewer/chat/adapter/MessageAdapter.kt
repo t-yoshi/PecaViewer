@@ -92,7 +92,14 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
         init {
             if (!binding.setVariable(BR.viewModel, viewModel))
                 throw RuntimeException("Nothing defined viewModel in layout.")
-            itemView.vBody?.movementMethod = LinkMovementMethod.getInstance()
+            itemView.vBody?.run {
+                movementMethod = LinkMovementMethod.getInstance()
+                //長押しでテキスト選択可能にする
+                setOnLongClickListener {
+                    setTextIsSelectable(true)
+                    false
+                }
+            }
             itemView.vThumbnail?.let { v->
                 v.eventListener = thumbnailViewListener
                 viewModel.thumbnails.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback(){
@@ -101,6 +108,12 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
                     }
                 })
             }
+        }
+
+        fun bind(m: IMessage){
+            itemView.vBody?.setTextIsSelectable(false)
+            viewModel.setMessage(m, binding is BbsMessageItemSimpleBinding)
+            binding.executePendingBindings()
         }
     }
 
@@ -129,8 +142,7 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.viewModel.setMessage(itemsHolder[position], defaultViewType == SIMPLE)
-        holder.binding.executePendingBindings()
+        holder.bind(itemsHolder[position])
     }
 
     fun saveInstanceState(outState: Bundle) {
