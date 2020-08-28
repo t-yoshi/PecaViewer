@@ -106,10 +106,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 if (!recyclerView.canScrollVertically(1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
                     //最後までスクロールしたらすべて既読とみなす
-                    Timber.d("AlreadyRead!")
-                    isAlreadyRead = true
-                    autoReload.isEnabled = chatPrefs.isAutoReloadEnabled
-                    autoReload.scheduleRun()
+                    alreadyRead()
                 }
 
                 if (newState != RecyclerView.SCROLL_STATE_IDLE) {
@@ -197,6 +194,13 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         savedInstanceState?.let(messageAdapter::restoreInstanceState)
     }
 
+    private fun alreadyRead(){
+        Timber.d("AlreadyRead!")
+        isAlreadyRead = true
+        autoReload.isEnabled = chatPrefs.isAutoReloadEnabled
+        autoReload.scheduleRun()
+    }
+
     private class SnackbarObserver(val view: View, val anchor: View?) : Observer<SnackbarMessage> {
         var bar: Snackbar? = null
         override fun onChanged(msg: SnackbarMessage?) {
@@ -246,6 +250,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
             }
             R.id.menu_align_bottom -> {
                 scrollToBottom()
+                alreadyRead()
             }
             R.id.menu_auto_reload_enabled -> {
                 val b = !item.isChecked
