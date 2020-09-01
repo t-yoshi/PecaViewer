@@ -36,6 +36,8 @@ class ChatViewModel(a: Application) : AndroidViewModel(a) {
     /**スナックバーに表示する*/
     val snackbarMessage = MutableLiveData<SnackbarMessage>()
 
+    val reloadRemain = MutableLiveData(-1)
+
     init {
         isThreadListVisible.observeForever {
             presenter.updateChatToolbarTitle()

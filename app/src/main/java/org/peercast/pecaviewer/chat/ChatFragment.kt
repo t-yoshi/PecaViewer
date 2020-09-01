@@ -336,6 +336,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         fun scheduleRun() = f()
 
         fun cancelScheduleRun() {
+            chatViewModel.reloadRemain.value = -1
             j?.cancel()
         }
 
@@ -349,7 +350,11 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
                         j?.cancel()
                         j = launch {
                             Timber.d("Set auto-reloading after ${AUTO_RELOAD_SEC}seconds.")
-                            delay(AUTO_RELOAD_SEC * 1000L)
+                            for (i in AUTO_RELOAD_SEC downTo 1) {
+                                chatViewModel.reloadRemain.value = i * 100 / AUTO_RELOAD_SEC
+                                delay(1000L)
+                            }
+                            chatViewModel.reloadRemain.value = -1
                             Timber.d("Start auto-reloading.")
                             j = null
                             launchLoading {
@@ -358,7 +363,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
                         }
                     }
                 } else {
-                    j?.cancel()
+                    cancelScheduleRun()
                     f = {}
                 }
             }

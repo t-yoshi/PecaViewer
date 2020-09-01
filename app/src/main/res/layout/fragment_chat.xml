@@ -31,6 +31,7 @@
                 app:title="@{viewModel.chatToolbarTitle}"
                 app:titleTextColor="@color/grey_1000b" />
 
+
         <com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
                 android:id="@+id/vThreadListRefresh"
                 android:layout_width="match_parent"
@@ -57,26 +58,40 @@
                 android:background="@color/grey_400"
                 android:visibility="@{safeUnbox(viewModel.isThreadListVisible) ? View.VISIBLE : View.GONE}" />
 
-        <com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
-                android:id="@+id/vMessageListRefresh"
+
+        <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="@integer/vMessageListRefresh_layout_weight"
-                app:srl_direction="bottom"
-                peca:colorScheme="@{@color/light_blue_A700}"
-                peca:refreshing="@{safeUnbox(viewModel.isMessageListRefreshing)}">
+                android:layout_weight="@integer/vMessageListRefresh_layout_weight">
 
-            <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/vMessageList"
+            <ProgressBar
+                    style="?android:progressBarStyleHorizontal"
+                    android:layout_width="16dp"
+                    android:layout_height="2dp"
+                    android:layout_gravity="right|top"
+                    android:alpha="0.7"
+                    android:progress="@{viewModel.reloadRemain}"
+                    android:visibility="@{viewModel.reloadRemain > 0 ? View.VISIBLE : View.INVISIBLE}" />
+
+            <com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
+                    android:id="@+id/vMessageListRefresh"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:scrollbarStyle="outsideInset"
-                    android:scrollbars="vertical"
-                    android:fadeScrollbars="false"
-                    app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+                    app:srl_direction="bottom"
+                    peca:colorScheme="@{@color/light_blue_A700}"
+                    peca:refreshing="@{safeUnbox(viewModel.isMessageListRefreshing)}">
 
-        </com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout>
+                <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/vMessageList"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:fadeScrollbars="false"
+                        android:scrollbarStyle="outsideInset"
+                        android:scrollbars="vertical"
+                        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+            </com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout>
+        </FrameLayout>
 
     </LinearLayout>
 
