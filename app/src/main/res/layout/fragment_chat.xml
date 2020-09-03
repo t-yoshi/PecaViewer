@@ -69,7 +69,7 @@
                     android:layout_width="16dp"
                     android:layout_height="2dp"
                     android:layout_gravity="right|top"
-                    android:alpha="0.7"
+                    android:alpha="0.8"
                     android:progress="@{viewModel.reloadRemain}"
                     android:visibility="@{viewModel.reloadRemain > 0 ? View.VISIBLE : View.INVISIBLE}" />
 

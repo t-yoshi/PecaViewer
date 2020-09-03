@@ -10,8 +10,8 @@ android {
         applicationId "org.peercast.pecaviewer"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 7_02_00_00
-        versionName "7.2.0-00"
+        versionCode 7_02_00_01
+        versionName "7.2.0-01"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     dataBinding {
@@ -63,8 +63,8 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:1.1.0"
 
     implementation "androidx.media:media:1.1.0"
-    implementation "com.google.android.material:material:1.2.0"
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation "com.google.android.material:material:1.2.1"
+    implementation 'com.android.support.constraint:constraint-layout:2.0.1'
     implementation 'com.google.android:flexbox:2.0.1'
 
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
