@@ -10,7 +10,7 @@ import org.peercast.pecaviewer.player.PlayerViewModel
 
 
 class AppViewModel(
-    a: Application,
+    private val a: Application,
     private val playerViewModel: PlayerViewModel,
     private val chatViewModel: ChatViewModel
 ) : AndroidViewModel(a) {
@@ -38,16 +38,25 @@ class AppViewModel(
         ld.addSource(slidingPanelState, o)
     }
 
+    /**狭いスマホの画面ではスクロール時に数秒FABを引っ込める*/
     val isPostDialogButtonFullVisible: MutableLiveData<Boolean> =
         MediatorLiveData<Boolean>().also { ld ->
-            val o = Observer<Any> {
+            val onVisible = Observer<Any> {
                 ld.value = true
             }
-            ld.addSource(playerViewModel.isFullScreenMode, o)
-            ld.addSource(playerViewModel.isControlsViewVisible, o)
-            ld.addSource(slidingPanelState, o)
+            //これらのイベントが発生したとき、引っ込んでいたFABを再表示する
+            ld.addSource(playerViewModel.isFullScreenMode, onVisible)
+            ld.addSource(playerViewModel.isControlsViewVisible, onVisible)
+            ld.addSource(slidingPanelState, onVisible)
 
-            //狭いスマホの画面ではスクロール時に数秒消す
+            val onHide = Observer<Any> {
+                if (a.resources.getBoolean(R.bool.isNarrowScreen))
+                    ld.value = false
+            }
+            //これらのイベントが発生したとき、一時的にFABを引っ込める
+            ld.addSource(chatViewModel.messageLiveData, onHide)
+
+            //n秒後に再表示する
             var j: Job? = null
             ld.observeForever {
                 j?.cancel()

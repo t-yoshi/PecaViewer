@@ -36,6 +36,7 @@ class ChatViewModel(a: Application) : AndroidViewModel(a) {
     /**スナックバーに表示する*/
     val snackbarMessage = MutableLiveData<SnackbarMessage>()
 
+    /**自動リロードへの残り秒(%)*/
     val reloadRemain = MutableLiveData(-1)
 
     init {
