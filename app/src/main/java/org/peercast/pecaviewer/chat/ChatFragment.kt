@@ -311,6 +311,11 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
 
 
     private fun launchLoading(block: suspend CoroutineScope.() -> Unit) {
+        if (job.isCancelled){
+            Timber.e("parent job has already been cancelled.")
+            return
+        }
+
         if (loadingJob?.run { isActive && !isCancelled } == true) {
             Timber.d("loadingJob [$loadingJob] is still active.")
             return

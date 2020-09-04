@@ -63,13 +63,18 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
      * コンタクトURLを読込む。
      * */
     suspend fun loadUrl(url: String, isForce: Boolean = false) {
+        Timber.d("loadUrl=$url, isForce=$isForce")
         when {
             url.isEmpty() -> {
             }
             !url.matches("""^https?://.+""".toRegex()) -> {
                 Timber.w("invalid url: $url")
             }
-            url != contactUrl || isForce -> {
+            url == contactUrl && !isForce -> {
+                //何もしない
+                return
+            }
+            else -> {
                 contactUrl = url
                 return doLoadUrl(url)
             }
