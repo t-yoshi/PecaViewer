@@ -35,9 +35,12 @@ class MessageViewModel {
         date.set(m.date)
         id.set(m.id)
 
-        (m.body as? Spannable)?.let {s->
-            thumbnails.set(s.getSpans<ThumbnailSpan>().take(32).map { it.url })
-        }
+        when (val b = m.body) {
+            is Spannable -> {
+                b.getSpans<ThumbnailSpan>().take(16).map { it.url }
+            }
+            else -> emptyList()
+        }.let(thumbnails::set)
 
         if (isShowElapsedTime && m is BbsMessage && m.timeInMillis > 0) {
             val et = DateUtils.formatElapsedTime(System.currentTimeMillis() - m.timeInMillis)

@@ -24,7 +24,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     }
 
     //コンタクトURL。配信者が更新しないかぎり変わらない。
-    private var contactUrl = ""
+    private val contactUrl get() = boardConn?.info?.url ?: ""
 
     /**スレッドのリストとメッセージを再読込する*/
     suspend fun reload() {
@@ -75,11 +75,9 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
                 return
             }
             else -> {
-                contactUrl = url
                 return doLoadUrl(url)
             }
         }
-        contactUrl = ""
         boardConn = null
         threadSelect(null)
     }
