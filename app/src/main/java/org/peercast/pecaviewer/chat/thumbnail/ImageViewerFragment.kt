@@ -32,7 +32,7 @@ class ImageViewerFragment : DialogFragment() {
 
     private fun loadImage(view: ImageView) {
         Glide.with(this)
-            .load(arguments!!.getString(KEY_URL))
+            .load(requireArguments().getString(KEY_URL))
             .override(
                 resources.displayMetrics.widthPixels,
                 resources.displayMetrics.heightPixels * 90 / 100

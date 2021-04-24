@@ -1,14 +1,13 @@
 package org.peercast.pecaviewer.chat.thumbnail
 
 import android.graphics.drawable.Drawable
-import androidx.databinding.ObservableBoolean
-import androidx.databinding.ObservableField
+import androidx.lifecycle.MutableLiveData
 
 class ItemViewModel {
-    val src = ObservableField<Drawable>()
-    val background = ObservableField<Drawable>()
-    val error = ObservableField<String>("loading..")
-    val isTooLargeFileSize = ObservableBoolean()
-    val isLinkUrl = ObservableBoolean()
-    val isAnimation = ObservableBoolean()
+    val src = MutableLiveData<Drawable>()
+    val background = MutableLiveData<Drawable?>()
+    val error = MutableLiveData("loading..")
+    val isTooLargeFileSize = MutableLiveData(false)
+    val isLinkUrl = MutableLiveData(false)
+    val isAnimation = MutableLiveData(false)
 }

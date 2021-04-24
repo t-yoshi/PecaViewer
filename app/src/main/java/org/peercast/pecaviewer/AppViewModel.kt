@@ -62,7 +62,7 @@ class AppViewModel(
                 j?.cancel()
                 if (!it) {
                     j = viewModelScope.launch {
-                        delay(2 * 1000L)
+                        delay(6 * 1000L)
                         ld.value = true
                     }
                 }

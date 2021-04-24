@@ -54,7 +54,7 @@ class MinimumSizeFitCenter(
     }
 
     companion object {
-        private const val ID = "org.peercast.pecaviewer.chat.thumbnail.XFitCenter"
+        private const val ID = "org.peercast.pecaviewer.chat.thumbnail.MinimumSizeFitCenter"
         private val ID_BYTE = ID.toByteArray(CHARSET)
     }
 }

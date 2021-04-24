@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import org.peercast.pecaviewer.R
@@ -21,6 +22,7 @@ class ViewAdapter(private val view: ThumbnailView) {
 
     private val inflater = LayoutInflater.from(view.context)
     private val viewHolders = ArrayList<ItemViewHolder>()
+    private val lifecycleOwner = view.findViewTreeLifecycleOwner()
 
     fun notifyChange() {
         check(viewHolders.size == view.childCount)
@@ -31,6 +33,7 @@ class ViewAdapter(private val view: ThumbnailView) {
                 view,
                 false
             )
+            b.lifecycleOwner = lifecycleOwner
             viewHolders.add(
                 ItemViewHolder(
                     view,
@@ -79,12 +82,12 @@ class ViewAdapter(private val view: ThumbnailView) {
 
             with(viewModel) {
                 loader.loadImage(u.imageUrl, 1 * 1024 * 1024)
-                background.set(bg)
-                isLinkUrl.set(u.linkUrl.isNotEmpty())
+                background.value = bg
+                isLinkUrl.value = u.linkUrl.isNotEmpty()
 
                 binding.root.setOnClickListener {
                     when {
-                        u.linkUrl.isNotEmpty() || error.get().isNullOrEmpty() -> {
+                        u.linkUrl.isNotEmpty() || error.value.isNullOrEmpty() -> {
                             view.eventListener?.onLaunchImageViewer(u)
                         }
                         else -> {
@@ -108,15 +111,15 @@ class ViewAdapter(private val view: ThumbnailView) {
     private class NotAnimatedTarget(p: ViewGroup.LayoutParams,
             private val vm: ItemViewModel) : CustomTarget<Drawable>(p.width, p.height){
         override fun onLoadFailed(errorDrawable: Drawable?) {
-            vm.src.set(errorDrawable)
+            vm.src.value = errorDrawable
         }
 
         override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-            vm.src.set(resource)
+            vm.src.value = resource
         }
 
         override fun onLoadCleared(placeholder: Drawable?) {
-            vm.src.set(placeholder)
+            vm.src.value = placeholder
         }
     }
 }

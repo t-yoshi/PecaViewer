@@ -36,14 +36,14 @@ open class DefaultImageLoader(
             Timber.w(e)
             val eCause = e?.rootCauses?.firstOrNull()
             if (eCause is TooLargeFileException) {
-                vm.error.set(eCause.message)
-                vm.isTooLargeFileSize.set(true)
+                vm.error.value = eCause.message
+                vm.isTooLargeFileSize.value = true
                 target.onLoadFailed(ContextCompat.getDrawable(c, R.drawable.ic_help_outline_gray_24dp))
                 return true
             } else {
-                vm.isTooLargeFileSize.set(false)
-                vm.error.set(e?.rootCauses?.firstOrNull()?.message ?: e?.message ?: "error...")
-                vm.isAnimation.set(false)
+                vm.isTooLargeFileSize.value = false
+                vm.error.value = e?.rootCauses?.firstOrNull()?.message ?: e?.message ?: "error..."
+                vm.isAnimation.value = false
                 return false
             }
         }
@@ -55,9 +55,9 @@ open class DefaultImageLoader(
             dataSource: DataSource,
             isFirstResource: Boolean
         ): Boolean {
-            vm.isAnimation.set(resource is Animatable)
-            vm.error.set(null)
-            vm.isTooLargeFileSize.set(false)
+            vm.isAnimation.value = resource is Animatable
+            vm.error.value = null
+            vm.isTooLargeFileSize.value = false
             return false
         }
     }
@@ -98,10 +98,10 @@ class NicoImageLoader(
      * */
     override fun loadImage(u: String, maxFileSize: Int) {
         require(u.startsWith("https://ext.nicovideo.jp/api/getthumbinfo/"))
-//        vm.src.set(
+//        vm.src.value =
 //            ContextCompat.getDrawable(c,
 //            R.drawable.ic_help_outline_gray_24dp
-//        ))
+//        )
         val req = Request.Builder()
             .url(u)
             .cacheControl(MAX_STALE_10DAYS)
@@ -123,7 +123,7 @@ class NicoImageLoader(
             ContextCompat.getDrawable(c,
             R.drawable.ic_warning_gray_24dp
         ))
-        vm.error.set("error: nicovideo getthumbinfo")
+        vm.error.postValue("error: nicovideo getthumbinfo")
         prevCall = null
     }
 

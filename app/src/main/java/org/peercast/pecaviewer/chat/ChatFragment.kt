@@ -16,6 +16,7 @@ import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
@@ -33,15 +34,10 @@ import org.peercast.pecaviewer.chat.thumbnail.ThumbnailView
 import org.peercast.pecaviewer.databinding.FragmentChatBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
 import timber.log.Timber
-import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
-class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener,
+class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
     ThumbnailView.OnItemEventListener {
-
-    private lateinit var job: Job
-    override val coroutineContext: CoroutineContext
-        get() = job + Dispatchers.Main
 
     private val chatViewModel by sharedViewModel<ChatViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
@@ -71,7 +67,6 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        job = Job()
         return FragmentChatBinding.inflate(inflater, container, false).also {
             it.viewModel = chatViewModel
             it.lifecycleOwner = viewLifecycleOwner
@@ -158,7 +153,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
             if (b)
                 messageAdapter.markAlreadyAllRead()
             isAlreadyRead = false
-            launch {
+            lifecycleScope.            launch {
                 messageAdapter.setItems(it)
                 if (true || b)
                     scrollToBottom()
@@ -306,22 +301,16 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
     override fun onDestroyView() {
         super.onDestroyView()
         loadingJob = null
-        job.cancel("view destroyed")
     }
 
 
     private fun launchLoading(block: suspend CoroutineScope.() -> Unit) {
-        if (job.isCancelled){
-            Timber.e("parent job has already been cancelled.")
-            return
-        }
-
         if (loadingJob?.run { isActive && !isCancelled } == true) {
             Timber.d("loadingJob [$loadingJob] is still active.")
             return
         }
         autoReload.cancelScheduleRun()
-        loadingJob = launch {
+        loadingJob = lifecycleScope.launch {
             loadingLiveData.postValue(true)
             try {
                 block()
@@ -353,7 +342,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
                 if (value) {
                     f = {
                         j?.cancel()
-                        j = launch {
+                        j = lifecycleScope. launch {
                             Timber.d("Set auto-reloading after ${AUTO_RELOAD_SEC}seconds.")
                             for (i in AUTO_RELOAD_SEC downTo 1) {
                                 chatViewModel.reloadRemain.value = i * 100 / AUTO_RELOAD_SEC
@@ -388,7 +377,7 @@ class ChatFragment : Fragment(), CoroutineScope, Toolbar.OnMenuItemClickListener
         }
 
     companion object {
-        private const val AUTO_RELOAD_SEC = 60
+        private const val AUTO_RELOAD_SEC = 40
 
         private const val KEY_AUTO_RELOAD = "key_chat_auto_reload"
         private const val KEY_SIMPLE_DISPLAY = "key_simple_display"
