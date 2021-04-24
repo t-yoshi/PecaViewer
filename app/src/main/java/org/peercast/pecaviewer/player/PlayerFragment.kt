@@ -23,7 +23,7 @@ import org.peercast.pecaviewer.service2.IPlayerService
 import org.videolan.libvlc.MediaPlayer
 import timber.log.Timber
 
-
+@Suppress("unused")
 class PlayerFragment : Fragment(), ServiceConnection {
 
     private val appViewModel by sharedViewModel<AppViewModel>()
@@ -39,7 +39,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         return FragmentPlayerBinding.inflate(inflater, container, false).also {
             it.lifecycleOwner = viewLifecycleOwner
             it.viewModel = playerViewModel
@@ -68,6 +68,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
             }
         }
 
+        vQuit.setOnClickListener { activity?.finish() }
         vFullScreen.setOnClickListener(::onFullScreenClicked)
         view.setOnTouchListener(DoubleTabDetector(view, ::onFullScreenClicked))
     }
