@@ -80,8 +80,8 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     override fun onCreate() {
         super.onCreate()
 
+        Timber.i("VLC: version=${LibVLC.version()}")
         libVLC = LibVLC(this, arrayListOf("--http-reconnect"))
-        Timber.i("VLC: version=${libVLC.version()}")
 
         player = MediaPlayer(libVLC)
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
