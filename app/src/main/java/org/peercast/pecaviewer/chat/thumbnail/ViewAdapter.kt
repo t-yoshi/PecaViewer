@@ -10,6 +10,7 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.databinding.ThumbnailViewItemBinding
+import timber.log.Timber
 import kotlin.properties.Delegates
 
 class ViewAdapter(private val view: ThumbnailView) {
@@ -22,7 +23,6 @@ class ViewAdapter(private val view: ThumbnailView) {
 
     private val inflater = LayoutInflater.from(view.context)
     private val viewHolders = ArrayList<ItemViewHolder>()
-    private val lifecycleOwner = view.findViewTreeLifecycleOwner()
 
     fun notifyChange() {
         check(viewHolders.size == view.childCount)
@@ -33,7 +33,10 @@ class ViewAdapter(private val view: ThumbnailView) {
                 view,
                 false
             )
-            b.lifecycleOwner = lifecycleOwner
+            view.findViewTreeLifecycleOwner()?.let {
+                b.lifecycleOwner = it
+            } ?: Timber.e("lifecycleOwner isn't set")
+
             viewHolders.add(
                 ItemViewHolder(
                     view,
@@ -56,7 +59,6 @@ class ViewAdapter(private val view: ThumbnailView) {
         private val view: ThumbnailView,
         private val binding: ThumbnailViewItemBinding
     ) {
-        private val c = binding.root.context
         private val viewModel = ItemViewModel()
         private val target = NotAnimatedTarget(binding.icon.layoutParams, viewModel)
 
@@ -67,6 +69,8 @@ class ViewAdapter(private val view: ThumbnailView) {
         private var prevLoader: DefaultImageLoader? = null
 
         fun showThumbnail(u: ThumbnailUrl) {
+            val c = view.context
+
             //prevLoader?.cancelLoad(binding.icon)
             val loader = when (u) {
                 is ThumbnailUrl.NicoVideo -> ::NicoImageLoader

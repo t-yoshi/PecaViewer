@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import androidx.annotation.MainThread
 import androidx.databinding.Observable
 import androidx.databinding.ViewDataBinding
+import androidx.lifecycle.ViewTreeLifecycleOwner
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.bbs_message_item_simple.view.*
 import org.peercast.pecaviewer.BR
@@ -81,9 +83,11 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        return ViewHolder(
+        val vh = ViewHolder(
             DATA_BINDING_INFLATES[viewType](inflater, parent, false)
         )
+        ViewTreeLifecycleOwner.set(vh.binding.root, parent.findViewTreeLifecycleOwner())
+        return vh
     }
 
     inner class ViewHolder(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -124,10 +128,7 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
             return null
         }
 
-        val inflater = LayoutInflater.from(parent.context)
-        val vh = ViewHolder(
-            DATA_BINDING_INFLATES[defaultViewType](inflater, parent, false)
-        )
+        val vh = onCreateViewHolder(parent, defaultViewType)
         vh.viewModel.setMessage(m)
         return vh.itemView
     }
