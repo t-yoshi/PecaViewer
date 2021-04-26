@@ -118,7 +118,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
 
         vThreadListRefresh.setOnRefreshListener {
             launchLoading {
-                chatViewModel.presenter.reload()
+                chatViewModel.presenter.reloadThreadList()
             }
         }
         vMessageListRefresh.setOnRefreshListener {
@@ -232,7 +232,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
                 isAlreadyRead = true
                 launchLoading {
                     when (chatViewModel.isThreadListVisible.value) {
-                        true -> chatViewModel.presenter.reload()
+                        true -> chatViewModel.presenter.reloadThreadList()
                         else -> chatViewModel.presenter.reloadThread()
                     }
                 }

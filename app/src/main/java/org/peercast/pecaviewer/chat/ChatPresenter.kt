@@ -31,6 +31,24 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         loadUrl(contactUrl, true)
     }
 
+    /**スレッドのリストを再読込する*/
+    suspend fun reloadThreadList() {
+        try {
+            chatViewModel.isThreadListRefreshing.postValue(true)
+            clearSnackMessage()
+
+            val conn = boardConn ?: return
+            val threads = conn.loadThreads()
+            Timber.d("threads=$threads")
+            chatViewModel.threadLiveData.postValue(threads)
+        } catch (e: IOException) {
+            threadSelect(null)
+            postSnackErrorMessage(e)
+        } finally {
+            chatViewModel.isThreadListRefreshing.postValue(false)
+        }
+    }
+
     /**
      * スレッドのメッセージを再読込する。
      * */
