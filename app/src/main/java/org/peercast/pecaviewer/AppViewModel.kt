@@ -60,9 +60,10 @@ class AppViewModel(
             var j: Job? = null
             ld.observeForever {
                 j?.cancel()
+                val sec = a.resources.getInteger(R.integer.post_button_show_after_sec)
                 if (!it) {
                     j = viewModelScope.launch {
-                        delay(6 * 1000L)
+                        delay(sec * 1000L)
                         ld.value = true
                     }
                 }
