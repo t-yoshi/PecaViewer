@@ -123,7 +123,7 @@ class NicoImageLoader(
             ContextCompat.getDrawable(c,
             R.drawable.ic_warning_gray_24dp
         ))
-        vm.error.postValue("error: nicovideo getthumbinfo")
+        vm.error.value = "error: nicovideo getthumbinfo"
         prevCall = null
     }
 

@@ -5,12 +5,10 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
-import androidx.lifecycle.findViewTreeLifecycleOwner
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.databinding.ThumbnailViewItemBinding
-import timber.log.Timber
 import kotlin.properties.Delegates
 
 class ViewAdapter(private val view: ThumbnailView) {
@@ -24,7 +22,7 @@ class ViewAdapter(private val view: ThumbnailView) {
     private val inflater = LayoutInflater.from(view.context)
     private val viewHolders = ArrayList<ItemViewHolder>()
 
-    fun notifyChange() {
+    private fun notifyChange() {
         check(viewHolders.size == view.childCount)
 
         while (urls.size - viewHolders.size > 0) {
@@ -33,10 +31,6 @@ class ViewAdapter(private val view: ThumbnailView) {
                 view,
                 false
             )
-            view.findViewTreeLifecycleOwner()?.let {
-                b.lifecycleOwner = it
-            } ?: Timber.e("lifecycleOwner isn't set")
-
             viewHolders.add(
                 ItemViewHolder(
                     view,
@@ -91,7 +85,7 @@ class ViewAdapter(private val view: ThumbnailView) {
 
                 binding.root.setOnClickListener {
                     when {
-                        u.linkUrl.isNotEmpty() || error.value.isNullOrEmpty() -> {
+                        u.linkUrl.isNotEmpty() || error.get().isNullOrEmpty() -> {
                             view.eventListener?.onLaunchImageViewer(u)
                         }
                         else -> {
