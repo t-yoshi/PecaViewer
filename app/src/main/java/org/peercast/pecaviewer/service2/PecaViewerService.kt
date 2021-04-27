@@ -99,6 +99,10 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         }
         VLCLogger.register(libVLC) { log ->
             //Timber.d("$log")
+
+            if (log.msg == "can't get Subtitles Surface")
+                return@register
+
             launch(Dispatchers.Main) {
                 eventLiveData.value = VLCLogEvent(log)
             }
