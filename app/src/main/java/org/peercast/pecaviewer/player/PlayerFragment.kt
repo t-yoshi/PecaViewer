@@ -105,6 +105,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
             mi.isCheckable = i == scale.ordinal
         }
         menu.findItem(R.id.menu_background).isChecked = appPreference.isBackgroundPlaying
+        menu.findItem(R.id.menu_auto_reconnect).isChecked = appPreference.isAutoReconnect
         menu.findItem(R.id.menu_screenshot).isEnabled =
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
     }
@@ -127,6 +128,11 @@ class PlayerFragment : Fragment(), ServiceConnection {
             R.id.menu_background -> {
                 item.isChecked = !item.isChecked
                 appPreference.isBackgroundPlaying = item.isChecked
+            }
+
+            R.id.menu_auto_reconnect -> {
+                item.isChecked = !item.isChecked
+                appPreference.isAutoReconnect = item.isChecked
             }
 
             R.id.menu_screenshot -> {

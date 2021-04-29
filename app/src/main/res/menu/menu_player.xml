@@ -43,6 +43,12 @@
     </item>
 
     <item
+            android:id="@+id/menu_auto_reconnect"
+            android:title="@string/auto_reconncet"
+            android:checkable="true"
+            />
+
+    <item
             android:id="@+id/menu_background"
             android:title="@string/background"
             android:checkable="true"

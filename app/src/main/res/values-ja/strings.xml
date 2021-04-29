@@ -1,6 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="video_scale">画面スケール</string>
     <string name="background">バックグラウンド</string>
+    <string name="auto_reconncet">再接続</string>
     <string name="screenshot" >スクリーンショット</string>
     <string name="sending">送信しています…</string>
     <string name="buffering">バッファ中です… %.1f%%</string>

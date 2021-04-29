@@ -15,10 +15,7 @@ import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.github.t_yoshi.vlcext.VLCLogger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
 import org.peercast.core.lib.LibPeerCast
 import org.peercast.core.lib.PeerCastController
@@ -50,6 +47,8 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     private lateinit var notificationManager: NotificationManagerCompat
     private lateinit var notificationHelper: NotificationHelper
     private var peerCastController: PeerCastController? = null
+    private var numReconnect = 0
+    private var jobReconnect : Job? = null
 
     override val coroutineContext: CoroutineContext
         get() = job
@@ -80,7 +79,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     override fun onCreate() {
         super.onCreate()
 
-        libVLC = LibVLC(this, arrayListOf("--http-reconnect"))
+        libVLC = LibVLC(this, arrayListOf("--no-spu"))
         Timber.i("VLC: version=${LibVLC.version()}")
 
         player = MediaPlayer(libVLC)
@@ -150,7 +149,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         }
 
         if (playingUrl != uri) {
-            player.stop()
+            stop()
             notificationHelper.setDefaultThumbnail()
             playingUrl = uri
         }
@@ -182,6 +181,8 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
     override fun stop() {
         player.stop()
+        jobReconnect?.cancel()
+        numReconnect = NUM_RECONNECT
     }
 
     private val pecaEventHandler = object : PeerCastController.EventListener {
@@ -196,7 +197,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             Timber.d("onNotifyChannel: $type $channelId $channelInfo")
             if (playingUrl.path?.contains(channelId) == true) {
                 val ev = PeerCastChannelEvent(channelInfo)
-                //接続中に空白だけがくる
+                //接続中に空白だけが来ても無視
                 if ("${ev.name}${ev.desc}${ev.comment}".isNotBlank())
                     eventLiveData.value = ev
             }
@@ -226,8 +227,28 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             MediaPlayer.Event.Paused,
             MediaPlayer.Event.Stopped ->
                 AudioManagerCompat.abandonAudioFocusRequest(audioManager, audioFocusRequest)
+
+            MediaPlayer.Event.Playing,
+            MediaPlayer.Event.Buffering,
+            MediaPlayer.Event.PositionChanged -> {
+                numReconnect = NUM_RECONNECT
+                jobReconnect?.cancel()
+            }
+
+            MediaPlayer.Event.EndReached -> {
+                if (appPreference.isAutoReconnect &&
+                        numReconnect-- > 0 && jobReconnect?.isActive != true) {
+                    jobReconnect = launch {
+                        Timber.i("It will try to re-connect in %ds (#%d)",
+                            RECONNECT_MSEC / 1000,
+                            NUM_RECONNECT - numReconnect)
+                        delay(RECONNECT_MSEC)
+                        play()
+                    }
+                }
+            }
         }
-        //Timber.d("ev=0x%03x".format(ev.type))
+        Timber.d("ev=%03d", ev.type)
 
         //バックグラウンド再生中に他アプリの割り込みでPausedになった場合、通知バーから復帰できるように
         if (!isViewAttached && ev.type == MediaPlayer.Event.Paused) {
@@ -284,6 +305,9 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             .setUsage(AudioAttributesCompat.USAGE_MEDIA)
             .setContentType(AudioAttributesCompat.CONTENT_TYPE_MOVIE)
             .build()
+
+        private const val NUM_RECONNECT = 2
+        private const val RECONNECT_MSEC = 5 * 1000L
     }
 }
 
