@@ -47,6 +47,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     private lateinit var notificationManager: NotificationManagerCompat
     private lateinit var notificationHelper: NotificationHelper
     private var peerCastController: PeerCastController? = null
+    //再接続試行回数
     private var numReconnect = 0
     private var jobReconnect : Job? = null
 
@@ -152,6 +153,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             stop()
             notificationHelper.setDefaultThumbnail()
             playingUrl = uri
+            numReconnect = NUM_RECONNECT
         }
     }
 
@@ -182,7 +184,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     override fun stop() {
         player.stop()
         jobReconnect?.cancel()
-        numReconnect = NUM_RECONNECT
+        numReconnect = 0
     }
 
     private val pecaEventHandler = object : PeerCastController.EventListener {
@@ -230,10 +232,8 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
             MediaPlayer.Event.Playing,
             MediaPlayer.Event.Buffering,
-            MediaPlayer.Event.PositionChanged -> {
-                numReconnect = NUM_RECONNECT
+            MediaPlayer.Event.PositionChanged ->
                 jobReconnect?.cancel()
-            }
 
             MediaPlayer.Event.EndReached -> {
                 if (appPreference.isAutoReconnect &&
@@ -306,7 +306,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             .setContentType(AudioAttributesCompat.CONTENT_TYPE_MOVIE)
             .build()
 
-        private const val NUM_RECONNECT = 2
+        private const val NUM_RECONNECT = 3
         private const val RECONNECT_MSEC = 5 * 1000L
     }
 }
