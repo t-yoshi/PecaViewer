@@ -4,8 +4,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <stdarg.h>
-#include <inttypes.h>
+#include <cstdarg>
+#include <cinttypes>
 
 
 using namespace std;
@@ -21,7 +21,7 @@ using namespace std;
 static JavaVM *sVM;
 
 #define CHECK_PTR(ptr) do { \
-        if ((ptr) == NULL) {\
+        if ((ptr) == nullptr) {\
             LOGF("[%s] %s is NULL", __func__, #ptr);\
             abort(); /*__noreturn*/ \
         }\
@@ -92,6 +92,11 @@ int libvlc_video_take_snapshot(libvlc_media_player_t *p_mi,
                                unsigned int i_width,
                                unsigned int i_height
 );
+int libvlc_video_get_size(libvlc_media_player_t *p_mi,
+                                  unsigned num,
+                                  unsigned *px,
+                                  unsigned *py
+);
 
 #define likely(p)      (!!(p))
 
@@ -105,7 +110,7 @@ static inline const char *IsUTF8(const char *str) {
         if (likely(n != (size_t) -1))
             str += n;
         else
-            return NULL;
+            return nullptr;
     return str;
 }
 static void logCallback(void *, int, const libvlc_log_t *, const char *, va_list);
@@ -113,7 +118,7 @@ static void logCallback(void *, int, const libvlc_log_t *, const char *, va_list
 } //extern "C"
 
 
-static struct _ClassCache {
+static struct VLCExtClassCache {
     jclass jc_VLCLogger;
     jclass jc_VLCLoggerContext;
 
@@ -121,6 +126,9 @@ static struct _ClassCache {
     jmethodID mid_VLCLoggerContext_init;
 
     jfieldID fid_VLCObject_mInstance;
+
+    jclass jc_Point;
+    jmethodID mid_Point_init;
 
     void init(JNIEnv *env) {
         jc_String = (jclass) env->NewGlobalRef(
@@ -160,6 +168,16 @@ static struct _ClassCache {
                                  "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V"
                 );
         CHECK_PTR(mid_VLCLoggerContext_init);
+
+
+        jc_Point = (jclass) env->NewGlobalRef(
+                env->FindClass("android/graphics/Point"));
+        CHECK_PTR(jc_Point);
+
+        mid_Point_init = env->GetMethodID(jc_Point,
+                                 "<init>",
+                                 "(II)V");
+        CHECK_PTR(mid_Point_init);
     }
 
     //NewStringUTFは内容によってはクラッシュする
@@ -285,3 +303,20 @@ Java_com_github_t_1yoshi_vlcext_VLCExt_videoTakeSnapshot(JNIEnv *env, jclass typ
 
     return ret;
 }
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_com_github_t_1yoshi_vlcext_VLCExt_videoGetSize(JNIEnv *env, jclass clazz, jobject player) {
+    auto * pPlayerInstance = (vlcjni_object *) env->GetLongField(
+            player,
+            sClassCache.fid_VLCObject_mInstance);
+    unsigned x, y;
+    int r = libvlc_video_get_size(pPlayerInstance->u.p_mp, 0, &x, &y);
+    //LOGI("%p: %d (%d,%d)", pPlayerInstance->u.p_mp, r, x, y);
+    if (r)
+        return nullptr;
+    return env->NewObject(
+            sClassCache.jc_Point, sClassCache.mid_Point_init,
+            x, y);
+}
+

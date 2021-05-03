@@ -1,10 +1,12 @@
 package com.github.t_yoshi.vlcext;
 
+import android.graphics.Point;
+
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.MediaPlayer;
 
 /**libvlc-androidで足りない機能を拡張する*/
-public class VLCExt {
+class VLCExt {
     private VLCExt(){}
 
     static native void setLoggerCallback(LibVLC libVlc, VLCLogger logger);
@@ -15,7 +17,9 @@ public class VLCExt {
      * @deprecated ハードウェアアクセラレーション下で動作しない
      * */
     @Deprecated
-    public static native boolean videoTakeSnapshot(MediaPlayer player, String filepath, int width, int height);
+    static native boolean videoTakeSnapshot(MediaPlayer player, String filepath, int width, int height);
+
+    static native Point videoGetSize(MediaPlayer player);
 
     static  {
         System.loadLibrary("vlcext");
