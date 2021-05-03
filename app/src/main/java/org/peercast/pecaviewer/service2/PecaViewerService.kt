@@ -80,7 +80,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     override fun onCreate() {
         super.onCreate()
 
-        libVLC = LibVLC(this, arrayListOf("--no-spu"))
+        libVLC = LibVLC(this, arrayListOf("--no-spu", "--http-reconnect"))
         Timber.i("VLC: version=${LibVLC.version()}")
 
         player = MediaPlayer(libVLC)
