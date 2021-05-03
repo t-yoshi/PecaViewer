@@ -24,7 +24,8 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
         ld.addSource(eventLiveData) { ev ->
             when (ev) {
                 is MediaPlayerEvent -> {
-                    ld.value = ev.isPlaying
+                    if (ld.value != ev.isPlaying)
+                        ld.value = ev.isPlaying
                 }
             }
         }
