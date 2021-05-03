@@ -2,7 +2,6 @@ package org.peercast.pecaviewer
 
 import android.app.Application
 import android.util.Log
-import com.google.android.play.core.missingsplits.MissingSplitsManagerFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
@@ -33,11 +32,6 @@ class PecaViewerApplication : Application() {
     private lateinit var koinApp: KoinApplication
 
     override fun onCreate() {
-        //不完全なapkをサイドローディングインストールしたユーザーに警告する
-        if (MissingSplitsManagerFactory.create(this).disableAppIfMissingRequiredSplits()) {
-            return
-        }
-
         super.onCreate()
 
         Timber.plant(ReleaseTree())
