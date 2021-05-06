@@ -153,7 +153,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             stop()
             notificationHelper.setDefaultThumbnail()
             playingUrl = uri
-            numReconnect = NUM_RECONNECT
+            numReconnect = 0
         }
     }
 
@@ -230,20 +230,20 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             MediaPlayer.Event.Stopped ->
                 AudioManagerCompat.abandonAudioFocusRequest(audioManager, audioFocusRequest)
 
-            MediaPlayer.Event.Playing,
-            MediaPlayer.Event.Buffering,
-            MediaPlayer.Event.PositionChanged ->
+            MediaPlayer.Event.PositionChanged -> {
                 jobReconnect?.cancel()
+                numReconnect = 0
+            }
 
             MediaPlayer.Event.EndReached -> {
-                if (appPreference.isAutoReconnect &&
-                        numReconnect-- > 0 && jobReconnect?.isActive != true) {
+                if (appPreference.isAutoReconnect && jobReconnect?.isActive != true) {
                     jobReconnect = launch {
-                        Timber.i("It will try to re-connect in %ds (#%d)",
-                            RECONNECT_MSEC / 1000,
-                            NUM_RECONNECT - numReconnect)
-                        delay(RECONNECT_MSEC)
-                        play()
+                        while (numReconnect++ < MAX_TRY_RECONNECT) {
+                            Timber.i("It will try to reconnect in %ds (#%d)",
+                                RECONNECT_MSEC / 1000, numReconnect)
+                            delay(RECONNECT_MSEC)
+                            play()
+                        }
                     }
                 }
             }
@@ -306,8 +306,8 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             .setContentType(AudioAttributesCompat.CONTENT_TYPE_MOVIE)
             .build()
 
-        private const val NUM_RECONNECT = 3
-        private const val RECONNECT_MSEC = 5 * 1000L
+        private const val MAX_TRY_RECONNECT = 3
+        private const val RECONNECT_MSEC = 10 * 1000L
     }
 }
 
