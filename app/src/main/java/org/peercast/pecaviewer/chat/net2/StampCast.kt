@@ -3,8 +3,8 @@ package org.peercast.pecaviewer.chat.net2
 
 import com.squareup.moshi.Json
 import okhttp3.Request
-import org.koin.core.KoinComponent
-import org.koin.core.get
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import org.peercast.pecaviewer.util.ISquareHolder
 import org.peercast.pecaviewer.util.runAwait
 import java.io.IOException

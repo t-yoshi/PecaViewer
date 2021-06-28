@@ -43,7 +43,7 @@ class PecaViewerApplication : Application() {
         }
 
         val prefs = get<AppPreference>()
-        ThemeUtils.setNightMode(prefs.isNightMode)
+        ThemeUtils.setNightMode(this, prefs.isNightMode)
 
         cleanFilesDir()
     }

@@ -5,7 +5,7 @@ import androidx.databinding.ObservableBoolean
 import androidx.databinding.ObservableField
 import org.peercast.pecaviewer.chat.net2.IThreadInfo
 
-class ThreadViewModel {
+class ThreadViewModel : BaseObservable() {
     val number = ObservableField<CharSequence>()
     val title = ObservableField<CharSequence>()
     val count = ObservableField<CharSequence>()

@@ -5,12 +5,13 @@ import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.annotation.MainThread
 import androidx.databinding.Observable
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.bbs_message_item_simple.view.*
 import org.peercast.pecaviewer.BR
+import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.net2.IBrowsable
 import org.peercast.pecaviewer.chat.net2.IMessage
 import org.peercast.pecaviewer.chat.net2.PostMessage
@@ -88,11 +89,13 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
 
     inner class ViewHolder(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
         val viewModel = MessageViewModel()
+        private val vBody : TextView? = itemView.findViewById(R.id.vBody)
+        private val vThumbnail : ThumbnailView? = itemView.findViewById(R.id.vThumbnail)
 
         init {
             if (!binding.setVariable(BR.viewModel, viewModel))
                 throw RuntimeException("Nothing defined viewModel in layout.")
-            itemView.vBody?.run {
+            vBody?.run {
                 movementMethod = LinkMovementMethod.getInstance()
                 //長押しでテキスト選択可能にする
                 setOnLongClickListener {
@@ -100,7 +103,7 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
                     false
                 }
             }
-            itemView.vThumbnail?.let { v->
+            vThumbnail?.let { v->
                 v.eventListener = thumbnailViewListener
                 viewModel.thumbnails.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback(){
                     override fun onPropertyChanged(sender: Observable, propertyId: Int) {
@@ -111,7 +114,7 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
         }
 
         fun bind(m: IMessage){
-            itemView.vBody?.setTextIsSelectable(false)
+            vBody?.setTextIsSelectable(false)
             viewModel.setMessage(m, binding is BbsMessageItemSimpleBinding)
             binding.executePendingBindings()
         }

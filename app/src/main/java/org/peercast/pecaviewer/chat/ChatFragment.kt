@@ -20,8 +20,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.fragment_chat.*
 import kotlinx.coroutines.*
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.AppViewModel
@@ -46,6 +44,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
         requireContext().getSharedPreferences("chat", Context.MODE_PRIVATE)
     }
 
+    private lateinit var binding: FragmentChatBinding
     private val threadAdapter = ThreadAdapter()
     private val messageAdapter = MessageAdapter(this)
     private var isAlreadyRead = false //既読
@@ -66,8 +65,9 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         return FragmentChatBinding.inflate(inflater, container, false).also {
+            binding = it
             it.viewModel = chatViewModel
             it.lifecycleOwner = viewLifecycleOwner
         }.root
@@ -76,28 +76,28 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        vThreadList.layoutManager = LinearLayoutManager(view.context)
-        vThreadList.adapter = threadAdapter
+        binding.vThreadList.layoutManager = LinearLayoutManager(view.context)
+        binding.vThreadList.adapter = threadAdapter
 
-        vMessageList.layoutManager = LinearLayoutManager(view.context)
-        vMessageList.adapter = messageAdapter
+        binding.vMessageList.layoutManager = LinearLayoutManager(view.context)
+        binding.vMessageList.adapter = messageAdapter
 
-        vChatToolbar.inflateMenu(R.menu.menu_chat_thread)
-        vChatToolbar.setNavigationOnClickListener {
+        binding.vChatToolbar.inflateMenu(R.menu.menu_chat_thread)
+        binding.vChatToolbar.setNavigationOnClickListener {
             chatViewModel.isThreadListVisible.run {
                 value = value != true
             }
         }
-        vChatToolbar.setOnMenuItemClickListener(this)
-        vChatToolbar.overflowIcon = ContextCompat.getDrawable(
-            vChatToolbar.context,
+        binding.vChatToolbar.setOnMenuItemClickListener(this)
+        binding.vChatToolbar.overflowIcon = ContextCompat.getDrawable(
+            binding.vChatToolbar.context,
             R.drawable.ic_more_vert_black_24dp
         )
 
-        vMessageList.setOnClickListener {
+        binding.vMessageList.setOnClickListener {
             chatViewModel.isToolbarVisible.value = true
         }
-        vMessageList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        binding.vMessageList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 if (!recyclerView.canScrollVertically(1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
                     //最後までスクロールしたらすべて既読とみなす
@@ -116,12 +116,12 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
             }
         })
 
-        vThreadListRefresh.setOnRefreshListener {
+        binding.vThreadListRefresh.setOnRefreshListener {
             launchLoading {
                 chatViewModel.presenter.reloadThreadList()
             }
         }
-        vMessageListRefresh.setOnRefreshListener {
+        binding.vMessageListRefresh.setOnRefreshListener {
             isAlreadyRead = true
             launchLoading {
                 chatViewModel.presenter.reloadThread()
@@ -163,24 +163,24 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
 
         chatViewModel.snackbarMessage.observe(
             viewLifecycleOwner,
-            SnackbarObserver(view, activity?.vPostDialogButton)
+            SnackbarObserver(view, activity?.findViewById(R.id.vPostDialogButton))
         )
 
         chatViewModel.isThreadListVisible.observe(viewLifecycleOwner, Observer {
-            vChatToolbar.menu.clear()
+            binding.vChatToolbar.menu.clear()
             if (it) {
-                vChatToolbar.inflateMenu(R.menu.menu_chat_board)
-                vChatToolbar.menu.findItem(R.id.menu_auto_reload_enabled).isChecked =
+                binding.vChatToolbar.inflateMenu(R.menu.menu_chat_board)
+                binding.vChatToolbar.menu.findItem(R.id.menu_auto_reload_enabled).isChecked =
                     chatPrefs.isAutoReloadEnabled
-                vChatToolbar.menu.findItem(R.id.menu_simple_display).isChecked =
+                binding.vChatToolbar.menu.findItem(R.id.menu_simple_display).isChecked =
                     chatPrefs.isSimpleDisplay
             } else {
-                vChatToolbar.inflateMenu(R.menu.menu_chat_thread)
+                binding.vChatToolbar.inflateMenu(R.menu.menu_chat_thread)
             }
         })
 
         loadingLiveData.observe(viewLifecycleOwner, Observer {
-            with(vChatToolbar.menu) {
+            with(binding.vChatToolbar.menu) {
                 findItem(R.id.menu_reload).isVisible = !it
                 findItem(R.id.menu_abort).isVisible = it
             }
@@ -241,7 +241,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
                 loadingJob?.cancel("abort button clicked")
             }
             R.id.menu_align_top -> {
-                vMessageList.scrollToPosition(0)
+                binding.vMessageList.scrollToPosition(0)
             }
             R.id.menu_align_bottom -> {
                 scrollToBottom()
@@ -269,7 +269,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
     private fun scrollToBottom() {
         val n = messageAdapter.itemCount
         if (n > 0) {
-            val manager = vMessageList.layoutManager as LinearLayoutManager
+            val manager = binding.vMessageList.layoutManager as LinearLayoutManager
             manager.scrollToPositionWithOffset(n - 1, 0)
         }
     }

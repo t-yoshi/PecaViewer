@@ -6,8 +6,8 @@ import androidx.core.text.parseAsHtml
 import androidx.core.text.set
 import androidx.core.text.toSpannable
 import okhttp3.Request
-import org.koin.core.KoinComponent
-import org.koin.core.get
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import org.peercast.pecaviewer.chat.adapter.PopupSpan.Companion.applyPopupSpanForAnchors
 import org.peercast.pecaviewer.chat.net2.BbsUtils.applyUrlSpan
 import org.peercast.pecaviewer.chat.net2.BbsUtils.stripHtml

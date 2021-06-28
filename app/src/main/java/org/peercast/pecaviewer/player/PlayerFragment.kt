@@ -12,7 +12,6 @@ import android.view.*
 import androidx.annotation.RequiresApi
 import androidx.core.view.children
 import androidx.fragment.app.Fragment
-import kotlinx.android.synthetic.main.fragment_player.*
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.AppPreference
@@ -30,6 +29,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val appPreference by inject<AppPreference>()
 
+    private lateinit var binding: FragmentPlayerBinding
     private var service: IPlayerService? = null
 
     //画面回転時orスクリーンショット処理時には一時的にバックグラウンド再生を許可する
@@ -41,6 +41,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
         savedInstanceState: Bundle?
     ): View {
         return FragmentPlayerBinding.inflate(inflater, container, false).also {
+            binding = it
             it.lifecycleOwner = viewLifecycleOwner
             it.viewModel = playerViewModel
         }.root
@@ -49,7 +50,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        vPlayerMenu.also {
+        binding.vPlayerMenu.also {
             MenuInflater(it.context).inflate(R.menu.menu_player, it.menu)
             onPrepareOptionsMenu(it.menu)
             it.setOnMenuItemClickListener(::onOptionsItemSelected)
@@ -59,7 +60,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
             playerViewModel.isControlsViewVisible.value = true
         }
 
-        vPlay.setOnClickListener {
+        binding.vPlay.setOnClickListener {
             service?.run {
                 if (playerViewModel.isPlaying.value == true)
                     stop()
@@ -68,8 +69,8 @@ class PlayerFragment : Fragment(), ServiceConnection {
             }
         }
 
-        vQuit.setOnClickListener { activity?.finish() }
-        vFullScreen.setOnClickListener(::onFullScreenClicked)
+        binding.vQuit.setOnClickListener { activity?.finish() }
+        binding.vFullScreen.setOnClickListener(::onFullScreenClicked)
         view.setOnTouchListener(DoubleTabDetector(view, ::onFullScreenClicked))
     }
 
@@ -141,14 +142,14 @@ class PlayerFragment : Fragment(), ServiceConnection {
             }
         }
 
-        onPrepareOptionsMenu(vPlayerMenu.menu)
+        onPrepareOptionsMenu(binding.vPlayerMenu.menu)
         return true
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
     private fun onScreenShot() {
         playerViewModel.presenter.takeScreenShotAndCreateIntent(
-            vVLCVideoLayout, 1280
+            binding.vVLCVideoLayout, 1280
         ) {
             isTemporaryBackgroundPlaying = true
             try {
@@ -174,7 +175,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
 
         service?.let { s ->
             if (appPreference.isBackgroundPlaying && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                playerViewModel.presenter.takeScreenShot(vVLCVideoLayout, 256) {
+                playerViewModel.presenter.takeScreenShot(binding.vVLCVideoLayout, 256) {
                     s.thumbnail = it
                 }
             }
@@ -189,7 +190,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
 
     override fun onServiceConnected(name: ComponentName, service_: IBinder) {
         service = (service_ as IPlayerService.Binder).service.also { s ->
-            s.attachViews(vVLCVideoLayout)
+            s.attachViews(binding.vVLCVideoLayout)
         }
     }
 

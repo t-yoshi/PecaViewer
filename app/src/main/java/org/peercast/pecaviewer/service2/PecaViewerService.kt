@@ -93,7 +93,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
         PeerCastController.from(this).also {
             if (it.isInstalled) {
-                it.eventListener = pecaEventHandler
+                it.notifyEventListener = pecaEventHandler
                 peerCastController = it
             }
         }
@@ -187,10 +187,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         numReconnect = 0
     }
 
-    private val pecaEventHandler = object : PeerCastController.EventListener {
-        override fun onConnectService(controller: PeerCastController) {
-        }
-
+    private val pecaEventHandler = object : PeerCastController.NotifyEventListener {
         override fun onNotifyChannel(
             type: NotifyChannelType,
             channelId: String,
@@ -208,9 +205,6 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         override fun onNotifyMessage(types: EnumSet<NotifyMessageType>, message: String) {
             Timber.d("onNotifyMessage: $types $message")
             eventLiveData.value = PeerCastNotifyMessageEvent(types, message)
-        }
-
-        override fun onDisconnectService() {
         }
     }
 
@@ -285,10 +279,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         super.onDestroy()
         job.cancel()
         VLCLogger.unregister(libVLC)
-        peerCastController?.let {
-            pecaEventHandler.onDisconnectService()
-            it.unbindService()
-        }
+        peerCastController?.unbindService()
 
         eventLiveData.removeObserver(notificationHelper)
         AudioManagerCompat.abandonAudioFocusRequest(audioManager, audioFocusRequest)

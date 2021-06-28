@@ -63,6 +63,7 @@
 
                 <!-- vPlayerToolbar: height=actionBarSize(56dp), layout_gravity=bottom -->
                 <include
+                        android:id="@+id/toolbar"
                         layout="@layout/player_toolbar"
                         bind:appViewModel="@{appViewModel}"
                         bind:playerViewModel="@{playerViewModel}"/>
@@ -83,6 +84,6 @@
                 android:enabled="@{chatViewModel.selectedThreadPoster != null}"
                 android:src="@drawable/ic_mode_edit_black_24dp"
                 peca:imageTintList="@{android.R.attr.textColorPrimary}"
-                />
+                android:contentDescription="@null" />
     </FrameLayout>
 </layout>

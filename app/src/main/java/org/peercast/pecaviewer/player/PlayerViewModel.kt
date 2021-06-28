@@ -6,8 +6,8 @@ import com.github.t_yoshi.vlcext.VLCLogMessage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.koin.core.KoinComponent
-import org.koin.core.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.service2.*
 import org.videolan.libvlc.MediaPlayer

@@ -14,8 +14,6 @@ import androidx.core.view.doOnLayout
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Observer
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.player_toolbar.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,6 +38,7 @@ class MainActivity : AppCompatActivity(),
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
 
+    private lateinit var binding: ActivityMainBinding
     private val playerViewModel by viewModel<PlayerViewModel>()
     private val chatViewModel by viewModel<ChatViewModel>()
     private val appViewModel by viewModel<AppViewModel> {
@@ -64,7 +63,7 @@ class MainActivity : AppCompatActivity(),
             val nightMode = intent.getBooleanExtra(PecaPlayIntent.EXTRA_NIGHT_MODE, false)
             val changed = appPreference.isNightMode != nightMode
             appPreference.isNightMode = nightMode
-            ThemeUtils.setNightMode(nightMode)
+            ThemeUtils.setNightMode(this, nightMode)
             if (changed && Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
                 recreate()//5.1まで再生成必要
                 return
@@ -76,7 +75,7 @@ class MainActivity : AppCompatActivity(),
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
 
-        ActivityMainBinding.inflate(layoutInflater).also { binding ->
+        binding = ActivityMainBinding.inflate(layoutInflater).also { binding ->
             setContentView(binding.root)
             binding.chatViewModel = chatViewModel
             binding.playerViewModel = playerViewModel
@@ -117,7 +116,7 @@ class MainActivity : AppCompatActivity(),
     }
 
     private fun onViewCreated() {
-        vPostDialogButton.setOnClickListener {
+        binding.vPostDialogButton.setOnClickListener {
             //フルスクリーン時には一時的にコントロールボタンを
             //表示させないとOSのナビゲーションバーが残る
             if (playerViewModel.isFullScreenMode.value == true)
@@ -126,10 +125,10 @@ class MainActivity : AppCompatActivity(),
             f.show(supportFragmentManager, "tag#PostMessageDialogFragment")
         }
 
-        vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
+        binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
 
         if (isLandscapeMode) {
-            vSlidingUpPanel.anchorPoint = 1f
+            binding.vSlidingUpPanel.anchorPoint = 1f
             initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
 
             appViewModel.isImmersiveMode.observe(this, Observer {
@@ -148,8 +147,8 @@ class MainActivity : AppCompatActivity(),
         }
 
         //昇降ボタン
-        vNavigation.setOnClickListener {
-            vSlidingUpPanel.run {
+        binding.toolbar.vNavigation.setOnClickListener {
+            binding.vSlidingUpPanel.run {
                 panelState = when {
                     anchorPoint < 1f -> SlidingUpPanelLayout.PanelState.ANCHORED
                     panelState == SlidingUpPanelLayout.PanelState.EXPANDED -> {
@@ -175,10 +174,10 @@ class MainActivity : AppCompatActivity(),
 
     private fun initPanelState(state: SlidingUpPanelLayout.PanelState) = launch {
         //launch{} で"requestLayout() improperly called"を回避する
-        vSlidingUpPanel.panelState = state
-        vSlidingUpPanel.doOnLayout {
+        binding.vSlidingUpPanel.panelState = state
+        binding.vSlidingUpPanel.doOnLayout {
             panelSlideListener.onPanelStateChanged(
-                vSlidingUpPanel,
+                binding.vSlidingUpPanel,
                 SlidingUpPanelLayout.PanelState.COLLAPSED,
                 state
             )
@@ -187,9 +186,9 @@ class MainActivity : AppCompatActivity(),
 
     private val panelSlideListener = object : SlidingUpPanelLayout.PanelSlideListener {
         override fun onPanelSlide(panel: View, __slideOffset: Float) {
-            val b = vPlayerFragmentContainer.bottom
-            vPlayerFragmentContainer.updatePadding(top = panel.height - b)
-            vChatFragmentContainer.updatePadding(bottom = b - vPlayerToolbar.height)
+            val b = binding.vPlayerFragmentContainer.bottom
+            binding.vPlayerFragmentContainer.updatePadding(top = panel.height - b)
+            binding.vChatFragmentContainer.updatePadding(bottom = b - binding.toolbar. vPlayerToolbar.height)
         }
 
         override fun onPanelStateChanged(
@@ -207,8 +206,8 @@ class MainActivity : AppCompatActivity(),
                 }
                 SlidingUpPanelLayout.PanelState.EXPANDED,
                 SlidingUpPanelLayout.PanelState.COLLAPSED -> {
-                    vPlayerFragmentContainer.updatePadding(top = 0)
-                    vChatFragmentContainer.updatePadding(bottom = 0)
+                    binding.vPlayerFragmentContainer.updatePadding(top = 0)
+                    binding.vChatFragmentContainer.updatePadding(bottom = 0)
                 }
                 else -> {
                 }
@@ -216,14 +215,14 @@ class MainActivity : AppCompatActivity(),
             when (newState) {
                 //プレーヤー前面
                 SlidingUpPanelLayout.PanelState.EXPANDED -> {
-                    vNavigation.setImageResource(R.drawable.ic_expand_less_white_24dp)
+                    binding.toolbar.vNavigation.setImageResource(R.drawable.ic_expand_less_white_24dp)
                 }
                 //チャット前面
                 SlidingUpPanelLayout.PanelState.COLLAPSED -> {
-                    vNavigation.setImageResource(R.drawable.ic_expand_more_white_24dp)
+                    binding.toolbar.vNavigation.setImageResource(R.drawable.ic_expand_more_white_24dp)
                 }
                 else -> {
-                    vNavigation.setImageDrawable(null)
+                    binding.toolbar.vNavigation.setImageDrawable(null)
                 }
             }
             if (newState in listOf(

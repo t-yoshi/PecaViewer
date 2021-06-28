@@ -18,10 +18,9 @@ import androidx.core.view.updateLayoutParams
 import androidx.databinding.BindingAdapter
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
-import org.koin.core.KoinComponent
 
 
-object AppBindAdapter : KoinComponent {
+object AppBindAdapter {
     @JvmStatic
     @BindingAdapter("listItemBackground")
             /**color=0のとき、selectableItemBackgroundをセットする。*/

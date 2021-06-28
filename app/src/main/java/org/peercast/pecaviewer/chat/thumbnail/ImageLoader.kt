@@ -13,8 +13,8 @@ import com.bumptech.glide.load.model.LazyHeaders
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import okhttp3.*
-import org.koin.core.KoinComponent
-import org.koin.core.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.util.ISquareHolder
 import timber.log.Timber

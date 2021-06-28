@@ -1,8 +1,8 @@
 package org.peercast.pecaviewer.util
 
 import android.app.Application
-import org.koin.core.KoinComponent
-import org.koin.core.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.peercast.pecaviewer.R
 import java.util.*
 import kotlin.math.abs
