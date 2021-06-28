@@ -38,7 +38,12 @@ open class DefaultImageLoader(
             if (eCause is TooLargeFileException) {
                 vm.error.value = eCause.message
                 vm.isTooLargeFileSize.value = true
-                target.onLoadFailed(ContextCompat.getDrawable(c, R.drawable.ic_help_outline_gray_24dp))
+                target.onLoadFailed(
+                    ContextCompat.getDrawable(
+                        c,
+                        R.drawable.ic_help_outline_gray_24dp
+                    )
+                )
                 return true
             } else {
                 vm.isTooLargeFileSize.value = false
@@ -120,9 +125,11 @@ class NicoImageLoader(
     override fun onFailure(call: Call, e: IOException) {
         Timber.w(e)
         target.onLoadFailed(
-            ContextCompat.getDrawable(c,
-            R.drawable.ic_warning_gray_24dp
-        ))
+            ContextCompat.getDrawable(
+                c,
+                R.drawable.ic_warning_gray_24dp
+            )
+        )
         vm.error.value = "error: nicovideo getthumbinfo"
         prevCall = null
     }

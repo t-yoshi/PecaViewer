@@ -22,6 +22,7 @@ class OkHttpLibraryGlideModule : AppGlideModule(), KoinComponent { //LibraryGlid
         registry.replace(
             GlideUrl::class.java,
             InputStream::class.java,
-            OkHttpUrlLoader.Factory(squareHolder.okHttpClient))
+            OkHttpUrlLoader.Factory(squareHolder.okHttpClient)
+        )
     }
 }

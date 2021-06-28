@@ -7,9 +7,10 @@
         tools:ignore="RtlHardcoded">
 
     <data>
+
         <variable
                 name="appViewModel"
-                type="org.peercast.pecaviewer.AppViewModel"/>
+                type="org.peercast.pecaviewer.AppViewModel" />
 
         <variable
                 name="chatViewModel"
@@ -53,20 +54,21 @@
                     android:layout_height="match_parent"
                     android:gravity="top"
                     android:orientation="vertical">
+
                 <androidx.fragment.app.FragmentContainerView
                         android:id="@+id/__vPlayerFragmentContainer"
                         android:name="org.peercast.pecaviewer.player.PlayerFragment"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
                         android:layout_weight="1"
-                        android:tag="tag#PlayerFragment"/>
+                        android:tag="tag#PlayerFragment" />
 
                 <!-- vPlayerToolbar: height=actionBarSize(56dp), layout_gravity=bottom -->
                 <include
                         android:id="@+id/toolbar"
                         layout="@layout/player_toolbar"
                         bind:appViewModel="@{appViewModel}"
-                        bind:playerViewModel="@{playerViewModel}"/>
+                        bind:playerViewModel="@{playerViewModel}" />
             </LinearLayout>
 
 

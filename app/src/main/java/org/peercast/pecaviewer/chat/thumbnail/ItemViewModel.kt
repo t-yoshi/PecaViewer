@@ -13,10 +13,10 @@ class ItemViewModel {
     val isAnimation = ObservableBoolean(false)
 }
 
-var <T> ObservableField<T>.value : T?
+var <T> ObservableField<T>.value: T?
     get() = this.get()
     set(value) = set(value)
 
-var ObservableBoolean.value : Boolean
+var ObservableBoolean.value: Boolean
     get() = this.get()
     set(value) = set(value)

@@ -10,7 +10,7 @@ class ThumbnailSpan(val url: ThumbnailUrl) : CharacterStyle() {
     }
 
     companion object {
-        fun Spannable.applyThumbnailSpan() : Spannable{
+        fun Spannable.applyThumbnailSpan(): Spannable {
             // '/'を含まないならURLではない
             if (this.contains('/')) {
                 ThumbnailUrl.findAll(this).forEach {

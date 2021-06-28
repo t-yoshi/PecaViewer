@@ -53,11 +53,11 @@ class ImageViewerFragment : DialogFragment() {
     companion object {
         private const val KEY_URL = "url"
 
-        fun create(u: String) : ImageViewerFragment {
+        fun create(u: String): ImageViewerFragment {
             return ImageViewerFragment().also {
                 //it.setStyle(STYLE_NO_TITLE, android.R.style.Theme_Dialog)
                 //it.set
-                it.arguments = Bundle().also { b->
+                it.arguments = Bundle().also { b ->
                     b.putString(KEY_URL, u)
                 }
             }

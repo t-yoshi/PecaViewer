@@ -19,12 +19,12 @@ import timber.log.Timber
 
 private val appModule = module {
     single { AppPreference(get()) }
-    viewModel { (pvm: PlayerViewModel, cvm: ChatViewModel)-> AppViewModel(get(), pvm, cvm) }
+    viewModel { (pvm: PlayerViewModel, cvm: ChatViewModel) -> AppViewModel(get(), pvm, cvm) }
     viewModel { PlayerViewModel(get()) }
     viewModel { ChatViewModel(get()) }
 
     single<ISquareHolder> { DefaultSquareHolder(get()) }
-    single{ PlayerServiceEventLiveData() }
+    single { PlayerServiceEventLiveData() }
 }
 
 @Suppress("unused")
@@ -56,16 +56,17 @@ class PecaViewerApplication : Application() {
             it.delete()
         }
     }
+
+    private class ReleaseTree : Timber.DebugTree() {
+        override fun isLoggable(tag: String?, priority: Int): Boolean {
+            return priority >= Log.INFO || BuildConfig.DEBUG
+        }
+
+        override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+            super.log(priority, tag, message, t)
+            if (t != null)
+                FirebaseCrashlytics.getInstance().recordException(t)
+        }
+    }
 }
 
-private class ReleaseTree : Timber.DebugTree() {
-    override fun isLoggable(tag: String?, priority: Int): Boolean {
-        return priority >= Log.INFO || BuildConfig.DEBUG
-    }
-
-    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-        super.log(priority, tag, message, t)
-        if (t != null)
-            FirebaseCrashlytics.getInstance().recordException(t)
-    }
-}

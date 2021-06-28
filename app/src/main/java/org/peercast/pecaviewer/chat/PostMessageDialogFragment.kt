@@ -51,7 +51,7 @@ class PostMessageDialogFragment : BottomSheetDialogFragment(),
 
             vSend.setOnClickListener(sendClickListener)
             vEdit.setOnEditorActionListener { v, actionId, _ ->
-                if (actionId == EditorInfo.IME_ACTION_SEND && vSend.isEnabled){
+                if (actionId == EditorInfo.IME_ACTION_SEND && vSend.isEnabled) {
                     sendClickListener.onClick(v)
                     true
                 } else {

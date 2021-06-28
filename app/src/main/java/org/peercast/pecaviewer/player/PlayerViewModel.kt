@@ -61,21 +61,22 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
     }
 
     /**チャンネル詳細、コメントなど*/
-    val channelDescription: MutableLiveData<CharSequence> = MediatorLiveData<CharSequence>().also { ld ->
-        ld.addSource(eventLiveData) { ev ->
-            when (ev) {
-                is PeerCastChannelEvent -> {
-                    ld.value = "${ev.desc} ${ev.comment}"
+    val channelDescription: MutableLiveData<CharSequence> =
+        MediatorLiveData<CharSequence>().also { ld ->
+            ld.addSource(eventLiveData) { ev ->
+                when (ev) {
+                    is PeerCastChannelEvent -> {
+                        ld.value = "${ev.desc} ${ev.comment}"
+                    }
                 }
             }
         }
-    }
 
     /**ステータス。配信時間など*/
     val channelStatus: LiveData<CharSequence> = MediatorLiveData<CharSequence>().also { ld ->
         ld.addSource(eventLiveData) { ev ->
-            when (ev){
-                is MediaPlayerEvent->{
+            when (ev) {
+                is MediaPlayerEvent -> {
                     when (ev.ev.type) {
                         MediaPlayer.Event.TimeChanged -> {
                             val t = ev.ev.timeChanged / 1000
@@ -84,7 +85,7 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
                         }
                     }
                 }
-             }
+            }
         }
     }
 
@@ -112,7 +113,7 @@ class PlayerViewModel(a: Application) : AndroidViewModel(a), KoinComponent {
                         //Timber.w("-> $log")
                     }
                 }
-                is PeerCastNotifyMessageEvent ->{
+                is PeerCastNotifyMessageEvent -> {
                     ld.value = ev.message
                 }
                 is MediaPlayerEvent -> {

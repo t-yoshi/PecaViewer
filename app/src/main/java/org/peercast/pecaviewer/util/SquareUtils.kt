@@ -38,7 +38,7 @@ class DefaultSquareHolder(private val a: Application) : ISquareHolder {
         .readTimeout(HTTP_RW_TIMEOUT, TimeUnit.SECONDS)
         .writeTimeout(HTTP_RW_TIMEOUT, TimeUnit.SECONDS)
 
-        .also { b->
+        .also { b ->
             if (BuildConfig.DEBUG) {
                 b.addNetworkInterceptor(HttpLoggingInterceptor().also {
                     it.level = HttpLoggingInterceptor.Level.HEADERS
@@ -48,7 +48,7 @@ class DefaultSquareHolder(private val a: Application) : ISquareHolder {
         .cache(Cache(cacheDir, MAX_CACHE_SIZE))
         .build()
 
-    override val moshi : Moshi = Moshi.Builder()
+    override val moshi: Moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
 
@@ -73,8 +73,8 @@ suspend fun <T> Call.runAwait(@WorkerThread f: (Response) -> T): T {
         enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
                 kotlin.runCatching {
-                        response.use { f(it) }
-                    }
+                    response.use { f(it) }
+                }
                     .onSuccess<T>(continuation::resume)
                     .onFailure(::onFailure)
             }

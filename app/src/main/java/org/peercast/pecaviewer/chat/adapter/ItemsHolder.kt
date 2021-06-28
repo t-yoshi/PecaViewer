@@ -59,7 +59,7 @@ open class ItemsHolder<T> {
     }
 
     @MainThread
-    fun clear(adapter: RecyclerView.Adapter<*>){
+    fun clear(adapter: RecyclerView.Adapter<*>) {
         callback = ItemsHolderCallback(emptyList(), emptyList())
         adapter.notifyDataSetChanged()
     }

@@ -55,7 +55,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         autoReload.isEnabled = chatPrefs.isAutoReloadEnabled
-        messageAdapter.defaultViewType = when(chatPrefs.isSimpleDisplay){
+        messageAdapter.defaultViewType = when (chatPrefs.isSimpleDisplay) {
             true -> MessageAdapter.SIMPLE
             else -> MessageAdapter.BASIC
         }
@@ -153,7 +153,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
             if (b)
                 messageAdapter.markAlreadyAllRead()
             isAlreadyRead = false
-            lifecycleScope.            launch {
+            lifecycleScope.launch {
                 messageAdapter.setItems(it)
                 if (true || b)
                     scrollToBottom()
@@ -189,7 +189,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
         savedInstanceState?.let(messageAdapter::restoreInstanceState)
     }
 
-    private fun alreadyRead(){
+    private fun alreadyRead() {
         Timber.d("AlreadyRead!")
         isAlreadyRead = true
         autoReload.isEnabled = chatPrefs.isAutoReloadEnabled
@@ -257,7 +257,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
                 val b = !item.isChecked
                 item.isChecked = b
                 chatPrefs.isSimpleDisplay = b
-                messageAdapter.defaultViewType = when(b){
+                messageAdapter.defaultViewType = when (b) {
                     true -> MessageAdapter.SIMPLE
                     else -> MessageAdapter.BASIC
                 }
@@ -342,7 +342,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
                 if (value) {
                     f = {
                         j?.cancel()
-                        j = lifecycleScope. launch {
+                        j = lifecycleScope.launch {
                             Timber.d("Set auto-reloading after ${AUTO_RELOAD_SEC}seconds.")
                             for (i in AUTO_RELOAD_SEC downTo 1) {
                                 chatViewModel.reloadRemain.value = i * 100 / AUTO_RELOAD_SEC

@@ -58,10 +58,10 @@ private class ShitarabaBoardConnection(
             .url("https://jbbs.shitaraba.net/${info.dir}/${info.bbsNumber}/subject.txt")
             .cacheControl(CC_MAX_STALE_10SEC)
             .build()
-        val threads =  client.parseSubjectText(req, ",") { path, title ->
+        val threads = client.parseSubjectText(req, ",") { path, title ->
             ShitarabaThreadInfo(info, path, title)
         }
-        if (threads.size >= 2 && threads.first() == threads.last()){
+        if (threads.size >= 2 && threads.first() == threads.last()) {
             //最初と最後に同じスレッドがあるので除く
             return threads.subList(0, threads.size - 1)
         }
@@ -115,7 +115,7 @@ private class ShitarabaBoardThreadConnection(
             val req = Request.Builder()
                 .url(url)
                 .cacheControl(cc).build()
-            base.client.parseText(req, "<>", 7) { a->
+            base.client.parseText(req, "<>", 7) { a ->
                 BbsMessage(info, a[0].toIntOrNull() ?: 0, a[1], a[2], a[3], a[4], a[5])
             }.let(result::addAll)
         }
@@ -139,7 +139,7 @@ private class ShitarabaBoardThreadConnection(
             execRequest(rawUrl, CacheControl.FORCE_NETWORK)
         }
 
-        result.lastOrNull()?.let { m->
+        result.lastOrNull()?.let { m ->
             //レス数を更新
             info.numMessages = m.number
         }
@@ -160,7 +160,10 @@ private class ShitarabaBoardThreadConnection(
         val req = Request.Builder()
             .url("https://jbbs.shitaraba.net/bbs/write.cgi")
             .header("Cookie", "name=${eucjp(m.name)}; mail=${eucjp(m.mail)}")
-            .header("Referer", "https://jbbs.shitaraba.net/${info.board.dir}/${info.board.bbsNumber}/")
+            .header(
+                "Referer",
+                "https://jbbs.shitaraba.net/${info.board.dir}/${info.board.bbsNumber}/"
+            )
             .cacheControl(FORCE_NETWORK_NO_STORE)
             .post(body)
             .build()
@@ -171,7 +174,11 @@ private class ShitarabaBoardThreadConnection(
         private fun eucjp(s: String) = URLEncoder.encode(s, "euc-jp")
         private val FORCE_NETWORK_NO_STORE = CacheControl.Builder().noCache().noStore().build()
 
-        suspend fun open(dir: String, bbsNumber: String, threadNumber: String): ShitarabaBoardThreadConnection {
+        suspend fun open(
+            dir: String,
+            bbsNumber: String,
+            threadNumber: String
+        ): ShitarabaBoardThreadConnection {
             val base = ShitarabaBoardConnection.open(dir, bbsNumber)
             val threadInfo = base.loadThreads().firstOrNull {
                 it.number == threadNumber

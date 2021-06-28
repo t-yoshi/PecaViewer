@@ -155,11 +155,11 @@ open class BbsMessage(
     final override val name: CharSequence = name.parseAsHtml()
     final override val mail: CharSequence = mail.parseAsHtml()
     final override val body: CharSequence =
-    //(body + TEST_TEXT).stripHtml().toSpannable()
+        //(body + TEST_TEXT).stripHtml().toSpannable()
         body.stripHtml().toSpannable()
-        .applyPopupSpanForAnchors() // PopupSpanを適用し、>123のようなアンカーでポップアップ
-        .applyUrlSpan() // URLSpanを適用し、リンクを動作させる
-        .applyThumbnailSpan() //ThumbnailSpanを適用し、サムネを生成する
+            .applyPopupSpanForAnchors() // PopupSpanを適用し、>123のようなアンカーでポップアップ
+            .applyUrlSpan() // URLSpanを適用し、リンクを動作させる
+            .applyThumbnailSpan() //ThumbnailSpanを適用し、サムネを生成する
 
     override val url = "${threadInfo.url}$number"
 

@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:peca="http://schemas.android.com/apk/res-auto"
-        xmlns:bind="http://schemas.android.com/apk/res-auto"
-        >
+        xmlns:bind="http://schemas.android.com/apk/res-auto">
 
     <data>
-        <import type="org.peercast.pecaviewer.chat.adapter.ThreadViewModel"/>
+
+        <import type="org.peercast.pecaviewer.chat.adapter.ThreadViewModel" />
+
         <variable
                 name="viewModel"
-                type="org.peercast.pecaviewer.chat.adapter.ThreadViewModel"/>
-        <import type="android.view.View"/>
+                type="org.peercast.pecaviewer.chat.adapter.ThreadViewModel" />
+
+        <import type="android.view.View" />
 
     </data>
-
 
 
     <LinearLayout
@@ -23,7 +24,7 @@
             android:paddingBottom="2dp"
             peca:listItemBackground="@{viewModel.isSelected ? @color/teal_200 : 0 }"
             android:clickable="true">
-<!---->
+        <!---->
 
         <TextView
                 android:layout_width="40sp"
@@ -33,7 +34,7 @@
                 android:minEms="1"
                 android:maxLines="1"
                 bind:text="@{viewModel.number}"
-                android:textAppearance="?attr/textAppearanceListItem"/>
+                android:textAppearance="?attr/textAppearanceListItem" />
 
         <TextView
                 android:layout_width="0dp"
@@ -42,14 +43,14 @@
                 android:gravity="center_vertical"
                 android:layout_marginLeft="10dp"
                 bind:text="@{viewModel.title}"
-                android:textAppearance="?attr/textAppearanceListItem"/>
+                android:textAppearance="?attr/textAppearanceListItem" />
 
         <TextView
                 android:id="@+id/vSpeed"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical|right"
-                android:textAppearance="?attr/textAppearanceListItem"/>
+                android:textAppearance="?attr/textAppearanceListItem" />
 
         <TextView
                 android:layout_width="wrap_content"
@@ -58,14 +59,14 @@
                 bind:text="@{viewModel.count}"
                 android:paddingRight="5dp"
                 android:paddingLeft="5dp"
-                android:textAppearance="?attr/textAppearanceListItem"/>
+                android:textAppearance="?attr/textAppearanceListItem" />
 
         <TextView
                 android:id="@+id/vDays"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical|right"
-                android:textAppearance="?attr/textAppearanceListItem"/>
+                android:textAppearance="?attr/textAppearanceListItem" />
 
 
     </LinearLayout>

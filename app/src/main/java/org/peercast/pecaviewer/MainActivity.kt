@@ -188,7 +188,7 @@ class MainActivity : AppCompatActivity(),
         override fun onPanelSlide(panel: View, __slideOffset: Float) {
             val b = binding.vPlayerFragmentContainer.bottom
             binding.vPlayerFragmentContainer.updatePadding(top = panel.height - b)
-            binding.vChatFragmentContainer.updatePadding(bottom = b - binding.toolbar. vPlayerToolbar.height)
+            binding.vChatFragmentContainer.updatePadding(bottom = b - binding.toolbar.vPlayerToolbar.height)
         }
 
         override fun onPanelStateChanged(

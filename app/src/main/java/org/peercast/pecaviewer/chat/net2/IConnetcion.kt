@@ -98,13 +98,13 @@ interface IBoardThreadConnection : IBoardConnection {
 }
 
 val IBoardInfo.boardTopTitle: String
-    get() = when(this){
-        is IThreadInfo-> board.title
+    get() = when (this) {
+        is IThreadInfo -> board.title
         else -> title
     }
 
 val IBoardInfo.boardTopUrl: String
-    get() = when(this){
-        is IThreadInfo-> board.url
+    get() = when (this) {
+        is IThreadInfo -> board.url
         else -> url
     }

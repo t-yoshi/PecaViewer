@@ -41,10 +41,10 @@ data class StampCastStamp(
     }
 }
 
-private data class StampCastBoardInfo (
+private data class StampCastBoardInfo(
     override val title: String,
     override val url: String
-): IBoardInfo
+) : IBoardInfo
 
 private data class StampCastThreadInfo(
     override val board: IBoardInfo, val page: Int
@@ -60,7 +60,8 @@ private class StampCastConnection(val id: Int) : IBoardConnection {
 
     override val info = StampCastBoardInfo(
         "StampCast (???)",
-         "https://stamp.archsted.com/$id")
+        "https://stamp.archsted.com/$id"
+    )
 
     override suspend fun loadThreads(): List<IThreadInfo> {
         return listOf(
@@ -90,12 +91,12 @@ private class StampCastPageConnection(
             .header("Cache-Control", "private, must-revalidate, max-stale=5")
             .build()
 
-        return square.okHttpClient.newCall(req).runAwait { res->
+        return square.okHttpClient.newCall(req).runAwait { res ->
             res.body?.let {
                 listAdapter.fromJson(it.string())
                     ?.stamps?.mapIndexed { i, m ->
-                    m.toMessage(info, i + 1)
-                }
+                        m.toMessage(info, i + 1)
+                    }
             }
         } ?: throw IOException("body is null")
     }

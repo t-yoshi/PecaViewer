@@ -23,7 +23,8 @@ import timber.log.Timber
 import kotlin.properties.Delegates
 
 
-class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEventListener) : RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
+class MessageAdapter(private val thumbnailViewListener: ThumbnailView.OnItemEventListener) :
+    RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
     PopupSpan.SupportAdapter {
 
     private var itemsOrigin = emptyList<IMessage>()
@@ -68,7 +69,7 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
     }
 
     /**全て既読のフラグ*/
-    fun markAlreadyAllRead(){
+    fun markAlreadyAllRead() {
         prevLastItem = (itemsOrigin.lastOrNull() as? IBrowsable)?.url
     }
 
@@ -89,8 +90,8 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
 
     inner class ViewHolder(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
         val viewModel = MessageViewModel()
-        private val vBody : TextView? = itemView.findViewById(R.id.vBody)
-        private val vThumbnail : ThumbnailView? = itemView.findViewById(R.id.vThumbnail)
+        private val vBody: TextView? = itemView.findViewById(R.id.vBody)
+        private val vThumbnail: ThumbnailView? = itemView.findViewById(R.id.vThumbnail)
 
         init {
             if (!binding.setVariable(BR.viewModel, viewModel))
@@ -103,9 +104,10 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
                     false
                 }
             }
-            vThumbnail?.let { v->
+            vThumbnail?.let { v ->
                 v.eventListener = thumbnailViewListener
-                viewModel.thumbnails.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback(){
+                viewModel.thumbnails.addOnPropertyChangedCallback(object :
+                    Observable.OnPropertyChangedCallback() {
                     override fun onPropertyChanged(sender: Observable, propertyId: Int) {
                         v.adapter.urls = viewModel.thumbnails.get() ?: emptyList()
                     }
@@ -113,7 +115,7 @@ class MessageAdapter(private val thumbnailViewListener : ThumbnailView.OnItemEve
             }
         }
 
-        fun bind(m: IMessage){
+        fun bind(m: IMessage) {
             vBody?.setTextIsSelectable(false)
             viewModel.setMessage(m, binding is BbsMessageItemSimpleBinding)
             binding.executePendingBindings()

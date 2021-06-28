@@ -47,9 +47,10 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     private lateinit var notificationManager: NotificationManagerCompat
     private lateinit var notificationHelper: NotificationHelper
     private var peerCastController: PeerCastController? = null
+
     //再接続試行回数
     private var numReconnect = 0
-    private var jobReconnect : Job? = null
+    private var jobReconnect: Job? = null
 
     override val coroutineContext: CoroutineContext
         get() = job
@@ -233,8 +234,10 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
                 if (appPreference.isAutoReconnect && jobReconnect?.isActive != true) {
                     jobReconnect = launch {
                         while (numReconnect++ < MAX_TRY_RECONNECT) {
-                            Timber.i("It will try to reconnect in %ds (#%d)",
-                                RECONNECT_MSEC / 1000, numReconnect)
+                            Timber.i(
+                                "It will try to reconnect in %ds (#%d)",
+                                RECONNECT_MSEC / 1000, numReconnect
+                            )
                             delay(RECONNECT_MSEC)
                             play()
                         }

@@ -20,8 +20,10 @@ class PopupSpan private constructor(private val resNumber: Int) : ClickableSpan(
         //Timber.d("--> #$resNumber $widget")
         val c = widget.context
         val rv = findParentRecyclerView(widget) ?: return Timber.w("RecyclerView not found")
-        val adapter = rv.adapter as? SupportAdapter ?: return Timber.w("adapter not as SupportAdapter")
-        val view = adapter.createViewForPopupWindow(resNumber, rv) ?: return Timber.w("createViewForPopupWindow returned null")
+        val adapter =
+            rv.adapter as? SupportAdapter ?: return Timber.w("adapter not as SupportAdapter")
+        val view = adapter.createViewForPopupWindow(resNumber, rv)
+            ?: return Timber.w("createViewForPopupWindow returned null")
         val bg = ContextCompat.getDrawable(c, R.drawable.frame_bg_blue)
 
         PopupWindow(

@@ -14,7 +14,7 @@ android {
         versionName "7.4.0-0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-    buildFeatures{
+    buildFeatures {
         dataBinding = true
     }
     kapt {
