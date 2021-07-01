@@ -1,6 +1,5 @@
 package org.peercast.pecaviewer.service2
 
-import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -11,6 +10,8 @@ import android.net.Uri
 import android.os.Binder
 import android.os.Bundle
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
@@ -28,13 +29,11 @@ import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.util.VLCVideoLayout
 import timber.log.Timber
 import java.util.*
-import kotlin.coroutines.CoroutineContext
 import kotlin.properties.Delegates
 
 
-class PecaViewerService : Service(), IPlayerService, CoroutineScope {
+class PecaViewerService : LifecycleService(), IPlayerService {
 
-    private val job = Job()
     private lateinit var libVLC: LibVLC
 
     /**
@@ -51,9 +50,6 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     //再接続試行回数
     private var numReconnect = 0
     private var jobReconnect: Job? = null
-
-    override val coroutineContext: CoroutineContext
-        get() = job
 
     private val appPreference by inject<AppPreference>()
     private val eventLiveData by inject<PlayerServiceEventLiveData>()
@@ -94,7 +90,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
         PeerCastController.from(this).also {
             if (it.isInstalled) {
-                it.notifyEventListener = pecaEventHandler
+                it.eventListener = pecaEventHandler
                 peerCastController = it
             }
         }
@@ -104,7 +100,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
             if (log.msg == "can't get Subtitles Surface")
                 return@register
 
-            launch(Dispatchers.Main) {
+            lifecycleScope.launch {
                 eventLiveData.value = VLCLogEvent(log)
             }
         }
@@ -116,10 +112,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
     }
 
     override fun onBind(intent: Intent): Binder {
-        peerCastController?.let {
-            if (!it.isConnected)
-                it.bindService()
-        }
+        super.onBind(intent)
 
         return object : Binder(), IPlayerService.Binder {
             override val service = this@PecaViewerService
@@ -137,7 +130,19 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         }
         .build()
 
+    private fun bindPeerCastService(){
+        lifecycleScope.launch {
+            peerCastController?.let {
+                if (!it.isConnected)
+                    peerCastController?.tryBindService()
+            }
+        }
+    }
+
     override fun prepareFromUri(uri: Uri, extras: Bundle) {
+        if (uri.host in listOf("localhost", "127.0.0.1"))
+            bindPeerCastService()
+
         /**PecaPlayからのインテントをもとにタイトル等を表示する。*/
         extras.let { b ->
             val name = b.getString(LibPeerCast.EXTRA_NAME, "")
@@ -188,7 +193,13 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
         numReconnect = 0
     }
 
-    private val pecaEventHandler = object : PeerCastController.NotifyEventListener {
+    private val pecaEventHandler = object : PeerCastController.EventListener {
+        override fun onConnectService(controller: PeerCastController) {
+        }
+
+        override fun onDisconnectService() {
+        }
+
         override fun onNotifyChannel(
             type: NotifyChannelType,
             channelId: String,
@@ -217,7 +228,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
 
     private val mediaPlayerEventListener = MediaPlayer.EventListener { ev ->
-        launch(Dispatchers.Main) {
+        lifecycleScope.launch {
             eventLiveData.value = MediaPlayerEvent(ev, player.isPlaying)
         }
         when (ev.type) {
@@ -232,7 +243,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
             MediaPlayer.Event.EndReached -> {
                 if (appPreference.isAutoReconnect && jobReconnect?.isActive != true) {
-                    jobReconnect = launch {
+                    jobReconnect = lifecycleScope.launch {
                         while (numReconnect++ < MAX_TRY_RECONNECT) {
                             Timber.i(
                                 "It will try to reconnect in %ds (#%d)",
@@ -280,7 +291,7 @@ class PecaViewerService : Service(), IPlayerService, CoroutineScope {
 
     override fun onDestroy() {
         super.onDestroy()
-        job.cancel()
+
         VLCLogger.unregister(libVLC)
         peerCastController?.unbindService()
 
