@@ -93,7 +93,7 @@ dependencies {
     implementation "com.squareup.moshi:moshi:1.12.0"
     kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.12.0'
 
-    implementation 'com.github.t-yoshi:peca-android:39d70eac1f'
+    implementation 'com.github.t-yoshi:peca-android:86d53e121a'
 
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
 

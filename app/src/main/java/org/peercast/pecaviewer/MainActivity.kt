@@ -3,13 +3,11 @@ package org.peercast.pecaviewer
 import android.content.*
 import android.content.pm.ActivityInfo
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.doOnLayout
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Observer
@@ -53,21 +51,12 @@ class MainActivity : AppCompatActivity(),
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            delegate.localNightMode = AppCompatDelegate.getDefaultNightMode()
-        }
-
         super.onCreate(savedInstanceState)
 
         if (intent.hasExtra(PecaPlayIntent.EXTRA_NIGHT_MODE)) {
             val nightMode = intent.getBooleanExtra(PecaPlayIntent.EXTRA_NIGHT_MODE, false)
-            val changed = appPreference.isNightMode != nightMode
             appPreference.isNightMode = nightMode
             ThemeUtils.setNightMode(this, nightMode)
-            if (changed && Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                recreate()//5.1まで再生成必要
-                return
-            }
         }
 
         requestedOrientation = when (appPreference.isFullScreenMode) {
