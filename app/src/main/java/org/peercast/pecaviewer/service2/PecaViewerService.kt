@@ -47,9 +47,7 @@ class PecaViewerService : LifecycleService(), IPlayerService {
     private lateinit var notificationHelper: NotificationHelper
     private var peerCastController: PeerCastController? = null
 
-    //再接続試行回数
-    private var numReconnect = 0
-    private var jobReconnect: Job? = null
+    private var jobPlay: Job? = null
 
     private val appPreference by inject<AppPreference>()
     private val eventLiveData by inject<PlayerServiceEventLiveData>()
@@ -96,7 +94,6 @@ class PecaViewerService : LifecycleService(), IPlayerService {
         }
         VLCLogger.register(libVLC) { log ->
             //Timber.d("$log")
-
             if (log.msg == "can't get Subtitles Surface")
                 return@register
 
@@ -159,7 +156,6 @@ class PecaViewerService : LifecycleService(), IPlayerService {
             stop()
             notificationHelper.setDefaultThumbnail()
             playingUrl = uri
-            numReconnect = 0
         }
     }
 
@@ -177,7 +173,22 @@ class PecaViewerService : LifecycleService(), IPlayerService {
 
         val r = AudioManagerCompat.requestAudioFocus(audioManager, audioFocusRequest)
         if (r == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            player.play(playingUrl)
+            jobPlay?.cancel()
+            jobPlay = lifecycleScope.launch {
+                player.play(playingUrl)
+
+                var tried = 0
+                while (tried++ < 6) {
+                    if (!appPreference.isAutoReconnect)
+                        break
+                    delay(10_000)
+                    if (player.isPlaying){
+                        tried = 0
+                    } else {
+                        player.play(playingUrl)
+                    }
+                }
+            }
         } else {
             Timber.w("audio focus not granted: $r")
         }
@@ -189,8 +200,7 @@ class PecaViewerService : LifecycleService(), IPlayerService {
 
     override fun stop() {
         player.stop()
-        jobReconnect?.cancel()
-        numReconnect = 0
+        jobPlay?.cancel()
     }
 
     private val pecaEventHandler = object : PeerCastController.EventListener {
@@ -235,26 +245,6 @@ class PecaViewerService : LifecycleService(), IPlayerService {
             MediaPlayer.Event.Paused,
             MediaPlayer.Event.Stopped ->
                 AudioManagerCompat.abandonAudioFocusRequest(audioManager, audioFocusRequest)
-
-            MediaPlayer.Event.PositionChanged -> {
-                jobReconnect?.cancel()
-                numReconnect = 0
-            }
-
-            MediaPlayer.Event.EndReached -> {
-                if (appPreference.isAutoReconnect && jobReconnect?.isActive != true) {
-                    jobReconnect = lifecycleScope.launch {
-                        while (numReconnect++ < MAX_TRY_RECONNECT) {
-                            Timber.i(
-                                "It will try to reconnect in %ds (#%d)",
-                                RECONNECT_MSEC / 1000, numReconnect
-                            )
-                            delay(RECONNECT_MSEC)
-                            play()
-                        }
-                    }
-                }
-            }
         }
         Timber.d("ev=%03d", ev.type)
 
@@ -310,9 +300,6 @@ class PecaViewerService : LifecycleService(), IPlayerService {
             .setUsage(AudioAttributesCompat.USAGE_MEDIA)
             .setContentType(AudioAttributesCompat.CONTENT_TYPE_MOVIE)
             .build()
-
-        private const val MAX_TRY_RECONNECT = 3
-        private const val RECONNECT_MSEC = 10 * 1000L
     }
 }
 
