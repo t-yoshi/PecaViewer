@@ -46,7 +46,7 @@ repositories {
 
 //リンクできるようにlibvlc.soを解凍する
 task extract_libvlc_aar(type: Copy) {
-    FileTree zip = zipTree(new File(projectDir, '../libvlc/libvlc-all-3.3.14.aar'))
+    FileTree zip = zipTree(new File(projectDir, '../libvlc/libvlc-all-3.4.0-eap4.aar'))
     from zip
     into 'build/_libvlc'
     include ('**/libvlc.so')
