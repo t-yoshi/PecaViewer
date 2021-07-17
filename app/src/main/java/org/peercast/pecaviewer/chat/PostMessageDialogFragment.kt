@@ -5,6 +5,7 @@ import android.content.DialogInterface
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.widget.Button
 import android.widget.EditText
 import androidx.core.widget.doOnTextChanged
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -33,10 +34,11 @@ class PostMessageDialogFragment : BottomSheetDialogFragment(),
 
     override fun onShow(dialog: DialogInterface) {
         val u = poster.info.url
-        val vEdit = requireView().findViewById<EditText>(R.id.vEdit)
-        val vSend = requireView().findViewById<EditText>(R.id.vSend)
 
         with(dialog as BottomSheetDialog) {
+            val vEdit = checkNotNull(findViewById<EditText>(R.id.vEdit))
+            val vSend = checkNotNull(findViewById<Button>(R.id.vSend))
+
             chatViewModel.messageDraft[u]?.let(vEdit::setText)
             val sendClickListener = View.OnClickListener {
                 vEdit.isEnabled = false
